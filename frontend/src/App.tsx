@@ -6,18 +6,34 @@ import DashboardPage from './pages/DashboardPage';
 import VendorsPage from './pages/VendorsPage';
 import ProductsPage from './pages/ProductsPage';
 import BillingPage from './pages/BillingPage';
+import SignInPage from './pages/SignInPage';
 import {ProductReturnModal} from './components/products/ProductReturnModal';
 
 
 
 export default function App() {
 
-  const [currentPage, setCurrentPage] = useState('vendors');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentPage, setCurrentPage] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
+  const handleSignIn = (email: string, password: string) => {
+    // Simple demo authentication - in production, validate against backend
+    if (email && password) {
+      setIsAuthenticated(true);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentPage('dashboard');
+  };
+
+
+  
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -62,6 +78,11 @@ export default function App() {
   };
 
 
+  // Show Sign In page if not authenticated
+  if (!isAuthenticated) {
+    return <SignInPage onSignIn={handleSignIn} />;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar
@@ -73,7 +94,7 @@ export default function App() {
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header onMenuToggle={toggleSidebar} currentPage={currentPage} />
+        <Header onMenuToggle={toggleSidebar} currentPage={currentPage} onLogout={handleLogout}/>
         
         <main className="flex-1 overflow-y-auto">
           {renderPage()}

@@ -1,12 +1,13 @@
-import { Menu, Bell, User } from 'lucide-react';
+import { Menu, Bell, User, LogOut } from 'lucide-react';
 
 interface HeaderProps {
   onMenuToggle: () => void;
   currentPage: string;
+  onLogout?: () => void;
 }
 
 
-export function Header({ onMenuToggle, currentPage }: HeaderProps) {
+export function Header({ onMenuToggle, currentPage, onLogout }: HeaderProps) {
     const pageTitle = currentPage.charAt(0).toUpperCase() + currentPage.slice(1);
 
 
@@ -31,6 +32,15 @@ export function Header({ onMenuToggle, currentPage }: HeaderProps) {
           <button className="p-2 hover:bg-accent rounded-lg transition-colors">
             <User className="w-5 h-5" />
           </button>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-2 hover:bg-accent rounded-lg transition-colors text-destructive"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
     </header>
