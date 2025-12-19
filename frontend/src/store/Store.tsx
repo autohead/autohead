@@ -2,12 +2,14 @@ import { configureStore } from "@reduxjs/toolkit";
 import { authApiSlice } from "./slices/authApiSlice";
 import { categoryApiSlice } from "./slices/categoryApiSlice";
 import { vendorApiSlice } from "./slices/vendorApiSlice";
+import { productApiSlice } from "./slices/productApiSlice";
 
 export const store = configureStore({
     reducer: {
         [authApiSlice.reducerPath]: authApiSlice.reducer,
         [categoryApiSlice.reducerPath]: categoryApiSlice.reducer,
-        [vendorApiSlice.reducerPath]: vendorApiSlice.reducer
+        [vendorApiSlice.reducerPath]: vendorApiSlice.reducer,
+        [productApiSlice.reducerPath]: productApiSlice.reducer
 
     },
     /**
@@ -23,7 +25,8 @@ export const store = configureStore({
         getDefaultMiddleware()
             .concat(authApiSlice.middleware)
             .concat(categoryApiSlice.middleware)
-            .concat(vendorApiSlice.middleware),
+            .concat(vendorApiSlice.middleware)
+            .concat(productApiSlice.middleware),    
 });
 
 export type RootState = ReturnType<typeof store.getState>;

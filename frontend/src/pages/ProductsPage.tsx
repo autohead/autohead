@@ -1,112 +1,49 @@
 import { useState } from 'react';
-import { Search, Plus, Edit, Eye, Filter } from 'lucide-react';
+import { Search, Plus, Edit, Eye } from 'lucide-react';
 import { AddEditProductModal } from '../components/products/AddEditProductModal';
 import { ProductDetailModal } from '../components/products/ProductsDetailsModal';
+import { useProductData } from '../hooks/product';
+import IsLoadingDisplay from '../components/common/IsLoadingDisplay';
+import IsErrorDisplay from '../components/common/IsErrorDisplay';
 
 
-const mockProducts = [
-    {
-        id: 1,
-        name: 'Premium Floor Mats',
-        sku: 'ACC-001',
-        category: 'Interior',
-        vendor: 'AutoParts Pro',
-        stock: 45,
-        costPrice: 850,
-        sellingPrice: 1200,
-    },
-    {
-        id: 2,
-        name: 'LED Headlight Kit',
-        sku: 'ACC-045',
-        category: 'Lighting',
-        vendor: 'BrightAuto Ltd',
-        stock: 23,
-        costPrice: 2500,
-        sellingPrice: 3500,
-    },
-    {
-        id: 3,
-        name: 'Car Cover Waterproof',
-        sku: 'ACC-089',
-        category: 'Exterior',
-        vendor: 'ShieldCar Inc',
-        stock: 18,
-        costPrice: 1200,
-        sellingPrice: 1800,
-    },
-    {
-        id: 4,
-        name: 'Phone Mount Magnetic',
-        sku: 'ACC-112',
-        category: 'Electronics',
-        vendor: 'TechDrive Co',
-        stock: 67,
-        costPrice: 450,
-        sellingPrice: 750,
-    },
-    {
-        id: 5,
-        name: 'Dash Camera HD',
-        sku: 'ACC-156',
-        category: 'Electronics',
-        vendor: 'SafeView Systems',
-        stock: 31,
-        costPrice: 3200,
-        sellingPrice: 4500,
-    },
-    {
-        id: 6,
-        name: 'Seat Covers Leather',
-        sku: 'ACC-201',
-        category: 'Interior',
-        vendor: 'LuxuryAuto',
-        stock: 12,
-        costPrice: 4500,
-        sellingPrice: 6500,
-    },
-    {
-        id: 7,
-        name: 'Tire Pressure Monitor',
-        sku: 'ACC-267',
-        category: 'Safety',
-        vendor: 'SafetyFirst Ltd',
-        stock: 54,
-        costPrice: 1800,
-        sellingPrice: 2500,
-    },
-    {
-        id: 8,
-        name: 'Steering Wheel Cover',
-        sku: 'ACC-298',
-        category: 'Interior',
-        vendor: 'AutoParts Pro',
-        stock: 89,
-        costPrice: 350,
-        sellingPrice: 550,
-    },
-];
+
 
 
 export default function ProductsPage() {
-    const [products, setProducts] = useState(mockProducts);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
+    const [page, setPage] = useState(1);
 
 
+    const {
+        data, isLoading, isError,
+    } = useProductData(page);
 
-    const filteredProducts = mockProducts.filter((product) => {
+
+    const products = data?.products.results ?? [];
+    const all_categories = data?.categories ?? [];
+    const total_pages = data?.products.total_pages ?? 0;
+    const current_page = data?.products.current_page ?? 0;
+
+    if (isLoading) return <IsLoadingDisplay />;
+    if (isError) return <IsErrorDisplay type='product' />;
+
+
+    const filteredProducts = products.filter((product) => {
         const matchesSearch =
-            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+            product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.vendor_products?.some(vp =>
+                vp.vendor_code.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        const matchesCategory = selectedCategory === 'all' || product.category_detail?.name === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
-    const categories = ['all', ...Array.from(new Set(mockProducts.map((p) => p.category)))];
+    const categories = ['all', ...Array.from(new Set(all_categories.map((p) => p.name)))];
 
     const handleAddProduct = (productData: any) => {
         console.log('New product:', productData);
@@ -175,24 +112,53 @@ export default function ProductsPage() {
                             <tbody className="divide-y divide-border">
                                 {filteredProducts.map((product) => (
                                     <tr key={product.id} className="hover:bg-accent/50 transition-colors">
-                                        <td className="px-4 py-3.5">{product.name}</td>
-                                        <td className="px-4 py-3.5 text-sm text-muted-foreground">{product.sku}</td>
+                                        <td className="px-4 py-3.5">{product.product_name}</td>
+                                        <td className="px-4 py-3.5 text-sm text-muted-foreground">
+                                            {
+                                                product.vendor_products?.length
+                                                    ? product.vendor_products.map(vp => (
+                                                        <div key={vp.id}>{vp.vendor_code} - {vp.vendor_detail?.name}</div>
+                                                    ))
+                                                    : '-'
+                                            }
+                                        </td>
                                         <td className="px-4 py-3.5">
                                             <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm">
-                                                {product.category}
+                                                {product.category_detail?.name}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3.5 text-sm">{product.vendor}</td>
+                                        <td className="px-4 py-3.5 text-sm">
+                                            {product.vendor_products?.length
+                                                ? product.vendor_products.map(vp => (
+                                                    <div key={vp.id}>{vp.vendor_detail?.name}</div>
+                                                ))
+                                                : '-'}
+                                        </td>
                                         <td className="px-4 py-3.5">
-                                            <span
-                                                className={`${product.stock < 20 ? 'text-amber-600' : 'text-green-600'
-                                                    }`}
-                                            >
-                                                {product.stock}
-                                            </span>
+                                            {product.vendor_products?.length
+                                                ? product.vendor_products.map((vp, index) => (
+                                                    <span
+                                                        key={index}
+                                                        className={vp.stock < 20 ? 'text-amber-600' : 'text-green-600'}
+                                                    >
+                                                        {vp.stock}
+                                                    </span>
+                                                ))
+                                                : '-'
+                                            }
                                         </td>
-                                        <td className="px-4 py-3.5 text-sm">₹{product.costPrice.toLocaleString()}</td>
-                                        <td className="px-4 py-3.5">₹{product.sellingPrice.toLocaleString()}</td>
+                                        <td className="px-4 py-3.5 text-sm">{product.vendor_products?.length
+                                            ? product.vendor_products.map((vp, index) => (
+                                                <div key={index}>₹{vp.cost}</div>
+                                            ))
+                                            : 0}</td>
+                                        <td className="px-4 py-3.5">
+                                            {product.vendor_products?.length
+                                                ? product.vendor_products.map((vp, index) => (
+                                                    <div key={index}>₹{vp.price}</div>
+                                                ))
+                                                : 0}
+                                        </td>
                                         <td className="px-4 py-3.5">
                                             <div className="flex items-center gap-2">
                                                 <button
@@ -221,40 +187,71 @@ export default function ProductsPage() {
                             className="bg-card rounded-xl p-4 border border-border shadow-sm"
                         >
                             <div className="space-y-3">
-                                <h3 className="text-foreground">{product.name}</h3>
+                                <h3 className="text-foreground">{product.product_name}</h3>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <div>
                                         <span className="text-muted-foreground">SKU:</span>
-                                        <p className="mt-0.5">{product.sku}</p>
+                                        <p className="mt-0.5">
+                                            {
+                                                product.vendor_products?.length
+                                                    ? product.vendor_products.map(vp => (
+                                                        <span key={vp.id}>{vp.vendor_code}</span>
+                                                    ))
+                                                    : '-'
+                                            }
+                                        </p>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">Stock:</span>
-                                        <p
-                                            className={`mt-0.5 ${product.stock < 20 ? 'text-amber-600' : 'text-green-600'
-                                                }`}
-                                        >
-                                            {product.stock} units
-                                        </p>
+                                        {product.vendor_products?.length
+                                            ? product.vendor_products.map((vp, index) => (
+                                                <p
+                                                    key={index}
+                                                    className={`mt-0.5 ${vp.stock < 20 ? 'text-amber-600' : 'text-green-600'
+                                                        }`}
+                                                >
+                                                    {vp.stock} units
+                                                </p>
+                                            ))
+                                            : '-'
+                                        }
+
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">Category:</span>
                                         <p className="mt-0.5">
                                             <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">
-                                                {product.category}
+                                                {product.category_detail?.name}
                                             </span>
                                         </p>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">Vendor:</span>
-                                        <p className="mt-0.5">{product.vendor}</p>
+                                        <p className="mt-0.5">{
+                                            product.vendor_products?.length
+                                                ? product.vendor_products.map(vp => (
+                                                    <span key={vp.id}>{vp.vendor_detail?.name}</span>
+                                                ))
+                                                : '-'
+                                        }</p>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">Cost:</span>
-                                        <p className="mt-0.5">₹{product.costPrice.toLocaleString()}</p>
+                                        <p className="mt-0.5">{
+                                            product.vendor_products?.length
+                                                ? product.vendor_products.map((vp, index) => (
+                                                    <span key={index}>₹{vp.cost}</span>
+                                                ))
+                                                : 0
+                                        }</p>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">Selling:</span>
-                                        <p className="mt-0.5">₹{product.sellingPrice.toLocaleString()}</p>
+                                        <p className="mt-0.5">{product.vendor_products?.length
+                                            ? product.vendor_products.map((vp, index) => (
+                                                <span key={index}>₹{vp.price}</span>
+                                            ))
+                                            : 0}</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2 pt-2">

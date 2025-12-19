@@ -1,22 +1,6 @@
 from rest_framework.response import Response
 
 def custom_response(data=None, method='GET', data_name='data', status=200):
-    # If data is a paginated queryset
-    paginated = False
-    paginated_data = {}
-    if isinstance(data, dict) and 'results' in data:
-        paginated = True
-        paginated_data = {
-            'count': data['count'],
-            'next': data['next'],
-            'previous': data['previous'],
-            'results': data['results'],
-            'current_page': data['current_page'],
-            'total_pages': data['total_pages'],
-        }
-        data_to_send = paginated_data
-    else:
-        data_to_send = data
 
     messages = {
         'GET': f'{data_name} fetched successfully',
@@ -32,5 +16,5 @@ def custom_response(data=None, method='GET', data_name='data', status=200):
     return Response({
         'success': True,
         'message': message,
-        'data': data_to_send
+        'data': data
     }, status=status)

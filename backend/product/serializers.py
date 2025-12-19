@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Products, VendorProducts
 from vendors.models import Vendors
 from category.models import Category
+from django.db import transaction
 
 
 # Lightweight serializers used for nested read-only representation.
@@ -13,7 +14,15 @@ class CategoryBriefSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
+class VendorBriefSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vendors
+        fields = ["id", "name"]
+
+
 class VendorProductSerializer(serializers.ModelSerializer):
+    vendor_detail = VendorBriefSerializer(read_only=True, source="vendor")
+
     class Meta:
         model = VendorProducts
         fields = "__all__"
@@ -22,9 +31,29 @@ class VendorProductSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
 
+    category_detail = CategoryBriefSerializer(source="category", read_only=True)
+    # Nested read-only representation of vendor_products corresponding to this product
+    vendor_products = VendorProductSerializer(many=True, read_only=True)
+    
+    
+
+    class Meta:
+        model = Products
+        fields = "__all__"
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "is_active",
+        ]
+
+
+class ProductFormSerializer(serializers.ModelSerializer):
+
     vendor = serializers.PrimaryKeyRelatedField(
         queryset=Vendors.objects.all(), write_only=True
     )
+
     vendor_code = serializers.CharField(write_only=True)
     price = serializers.DecimalField(max_digits=10, decimal_places=2, write_only=True)
     cost = serializers.DecimalField(max_digits=10, decimal_places=2, write_only=True)
@@ -34,14 +63,15 @@ class ProductSerializer(serializers.ModelSerializer):
         queryset=Category.objects.filter(is_active=True).all(), write_only=True
     )
 
-    category_detail = CategoryBriefSerializer(source="category", read_only=True)
-
-    vendor_products = VendorProductSerializer(many=True, read_only=True)
-
     class Meta:
         model = Products
         fields = "__all__"
-        read_only_fields = ["id", "created_at", "updated_at", "is_active"]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "is_active",
+        ]
 
     def validate(self, attrs):
         Category = attrs.get("category")
@@ -55,9 +85,6 @@ class ProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Selling price cannot be less than cost price."
             )
-
-        # if not attrs.get("category") is None:
-        #     raise serializers.ValidationError({"category": Category.id})
 
         if (
             Products.objects.filter(category=Category, product_name=product_name)
@@ -84,6 +111,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    @transaction.atomic
     def create(self, validated_data):
 
         vendor = validated_data.pop("vendor")
@@ -104,6 +132,7 @@ class ProductSerializer(serializers.ModelSerializer):
         )
         return product
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         # --- VendorProducts fields ---
         vendor = validated_data.pop("vendor", None)
@@ -135,5 +164,5 @@ class ProductSerializer(serializers.ModelSerializer):
                     if value is not None:
                         setattr(vendor_product, field, value)
 
-                    vendor_product.save()
+                vendor_product.save()
         return instance
