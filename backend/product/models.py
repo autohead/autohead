@@ -1,17 +1,21 @@
 from django.db import models
 from category.models import Category
 from vendors.models import Vendors
-from django.core.files.storage import default_storage
+# from django.core.files.storage import default_storage
+from cloudinary.models import CloudinaryField
+
+
 
 # Create your models here.
 
 class Products(models.Model):
     product_name = models.CharField(max_length=255)
+    product_code = models.CharField(max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='products',  null=False)
     
     is_active = models.BooleanField(default=True)
-    image = models.ImageField(upload_to='product_images/', null=True, blank=True)
+    image = CloudinaryField('image',folder='authohead/product_images/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -31,20 +35,20 @@ class Products(models.Model):
         return self.name
         
     #delete old Image
-    def save(self, *args, **kwargs):
-        old_image = None
+    # def save(self, *args, **kwargs):
+    #     old_image = None
 
-        if self.pk:
-            try:
-                old_image = Products.objects.get(pk=self.pk).image
-            except Products.DoesNotExist:
-                pass
+    #     if self.pk:
+    #         try:
+    #             old_image = Products.objects.get(pk=self.pk).image
+    #         except Products.DoesNotExist:
+    #             pass
             
-        super().save(*args, **kwargs)
+    #     super().save(*args, **kwargs)
 
-        if old_image and old_image != self.image:
-            if default_storage.exists(old_image.name):
-                default_storage.delete(old_image.name)
+    #     if old_image and old_image != self.image:
+    #         if default_storage.exists(old_image.name):
+    #             default_storage.delete(old_image.name)
                 
                 
 class VendorProducts(models.Model):

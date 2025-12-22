@@ -1,53 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '../Modal';
-import { FormField, Input, TextArea, Select } from '../FormField';
+import { FormField, Input, TextArea, Select, ImageInput } from '../FormField';
 import { Save, X } from 'lucide-react';
+import type { Product, Category, } from '../../types/product';
 
 
 interface AddEditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
+  mode: 'add' | 'edit';
   onSave: (product: any) => void;
+  isSaving: boolean
+  products?: Product | null;
+  categories?: Category[];
 }
 
-const vendors = [
-  { value: '', label: 'Select Vendor' },
-  { value: 'AutoParts Pro', label: 'AutoParts Pro' },
-  { value: 'BrightAuto Ltd', label: 'BrightAuto Ltd' },
-  { value: 'ShieldCar Inc', label: 'ShieldCar Inc' },
-  { value: 'TechDrive Co', label: 'TechDrive Co' },
-  { value: 'SafeView Systems', label: 'SafeView Systems' },
-  { value: 'LuxuryAuto', label: 'LuxuryAuto' },
-  { value: 'SafetyFirst Ltd', label: 'SafetyFirst Ltd' },
-];
 
 
-const categories = [
-  { value: '', label: 'Select Category' },
-  { value: 'Interior', label: 'Interior' },
-  { value: 'Exterior', label: 'Exterior' },
-  { value: 'Electronics', label: 'Electronics' },
-  { value: 'Lighting', label: 'Lighting' },
-  { value: 'Safety', label: 'Safety' },
-  { value: 'Performance', label: 'Performance' },
-  { value: 'Maintenance', label: 'Maintenance' },
-];
 
 
-export function AddEditProductModal({ isOpen, onClose, onSave }: AddEditProductModalProps) {
-const [formData, setFormData] = useState({
-    name: '',
-    sku: '',
+
+export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, isSaving, categories }: AddEditProductModalProps) {
+  const [formData, setFormData] = useState({
+    product_name: '',
+    product_code: '',
     category: '',
-    vendor: '',
     description: '',
-    stock: '',
-    minStock: '',
-    costPrice: '',
-    sellingPrice: '',
-    barcode: '',
-    location: '',
   });
+
+  useEffect(() => {
+    if (products) {
+      setFormData({
+        product_name: products.product_name ?? '',
+        product_code: products.product_code ?? '',
+        category: String(products.category_detail?.id ?? ""),
+        description: products.description ?? '',
+      });
+    }
+  }, [products]);
+
+
+  const [image, setImage] = useState(products?.image_url || '');
 
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -69,56 +62,44 @@ const [formData, setFormData] = useState({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name.trim()) newErrors.name = 'Product name is required';
-    if (!formData.sku.trim()) newErrors.sku = 'SKU is required';
-    if (!formData.category) newErrors.category = 'Category is required';
-    if (!formData.vendor) newErrors.vendor = 'Vendor is required';
-    if (!formData.stock || Number(formData.stock) < 0)
-      newErrors.stock = 'Valid stock quantity is required';
-    if (!formData.minStock || Number(formData.minStock) < 0)
-      newErrors.minStock = 'Valid minimum stock is required';
-    if (!formData.costPrice || Number(formData.costPrice) <= 0)
-      newErrors.costPrice = 'Valid cost price is required';
-    if (!formData.sellingPrice || Number(formData.sellingPrice) <= 0)
-      newErrors.sellingPrice = 'Valid selling price is required';
-    if (Number(formData.sellingPrice) < Number(formData.costPrice))
-      newErrors.sellingPrice = 'Selling price must be greater than cost price';
+    if (!formData.product_name.trim())
+      newErrors.product_name = 'Product name is required';
+
+    if (!formData.product_code.trim())
+      newErrors.product_code = 'Product code is required';
+
+    if (!formData.category)
+      newErrors.category = 'Category is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (validateForm()) {
-      onSave({
-        ...formData,
-        stock: Number(formData.stock),
-        minStock: Number(formData.minStock),
-        costPrice: Number(formData.costPrice),
-        sellingPrice: Number(formData.sellingPrice),
-      });
-      handleClose();
+      try {
+        await onSave(formData);
+        handleClose();
+      } catch (error) {
+        console.error('Error saving product:', error);
+      }
     }
   };
 
 
 
+
   const handleClose = () => {
     setFormData({
-      name: '',
-      sku: '',
+      product_name: '',
+      product_code: '',
       category: '',
-      vendor: '',
       description: '',
-      stock: '',
-      minStock: '',
-      costPrice: '',
-      sellingPrice: '',
-      barcode: '',
-      location: '',
     });
+    setImage('');
     setErrors({});
     onClose();
   };
@@ -129,10 +110,10 @@ const [formData, setFormData] = useState({
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Product Name */}
-          <FormField label="Product Name" required error={errors.name}>
+          <FormField label="Product Name" required error={errors.product_name}>
             <Input
-              name="name"
-              value={formData.name}
+              name="product_name"
+              value={formData.product_name}
               onChange={handleChange}
               placeholder="e.g., Premium Floor Mats"
               error={!!errors.name}
@@ -140,13 +121,13 @@ const [formData, setFormData] = useState({
           </FormField>
 
           {/* SKU */}
-          <FormField label="SKU" required error={errors.sku}>
+          <FormField label="Product Code" required error={errors.product_code}>
             <Input
-              name="sku"
-              value={formData.sku}
+              name="product_code"
+              value={formData.product_code}
               onChange={handleChange}
               placeholder="e.g., ACC-001"
-              error={!!errors.sku}
+              error={!!errors.product_code}
             />
           </FormField>
 
@@ -156,95 +137,28 @@ const [formData, setFormData] = useState({
               name="category"
               value={formData.category}
               onChange={handleChange}
-              options={categories}
+              options={categories?.map((cat) => ({
+                value: cat.id.toString(),
+                label: cat.name,
+              })) ?? []}
               error={!!errors.category}
             />
           </FormField>
 
-          {/* Vendor */}
-          <FormField label="Vendor" required error={errors.vendor}>
-            <Select
-              name="vendor"
-              value={formData.vendor}
-              onChange={handleChange}
-              options={vendors}
-              error={!!errors.vendor}
+          <FormField label="Product Image" required >
+            <ImageInput
+              value={image}
+              onChange={(url, file) => {
+                setImage(url ?? '');
+
+                setFormData((prev) => ({
+                  ...prev,
+                  image: file ?? null,
+                }));
+              }}
             />
           </FormField>
 
-          {/* Stock Quantity */}
-          <FormField label="Stock Quantity" required error={errors.stock}>
-            <Input
-              name="stock"
-              type="number"
-              min="0"
-              value={formData.stock}
-              onChange={handleChange}
-              placeholder="0"
-              error={!!errors.stock}
-            />
-          </FormField>
-
-          {/* Minimum Stock */}
-          <FormField label="Minimum Stock Level" required error={errors.minStock}>
-            <Input
-              name="minStock"
-              type="number"
-              min="0"
-              value={formData.minStock}
-              onChange={handleChange}
-              placeholder="0"
-              error={!!errors.minStock}
-            />
-          </FormField>
-
-          {/* Cost Price */}
-          <FormField label="Cost Price (₹)" required error={errors.costPrice}>
-            <Input
-              name="costPrice"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.costPrice}
-              onChange={handleChange}
-              placeholder="0.00"
-              error={!!errors.costPrice}
-            />
-          </FormField>
-
-          {/* Selling Price */}
-          <FormField label="Selling Price (₹)" required error={errors.sellingPrice}>
-            <Input
-              name="sellingPrice"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.sellingPrice}
-              onChange={handleChange}
-              placeholder="0.00"
-              error={!!errors.sellingPrice}
-            />
-          </FormField>
-
-          {/* Barcode */}
-          <FormField label="Barcode">
-            <Input
-              name="barcode"
-              value={formData.barcode}
-              onChange={handleChange}
-              placeholder="Optional"
-            />
-          </FormField>
-
-          {/* Storage Location */}
-          <FormField label="Storage Location">
-            <Input
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="e.g., Warehouse A, Shelf 12"
-            />
-          </FormField>
         </div>
 
         {/* Description */}
@@ -273,7 +187,13 @@ const [formData, setFormData] = useState({
             className="flex-1 sm:flex-none px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
           >
             <Save className="w-4 h-4" />
-            Save Product
+            {
+              isSaving ? mode === 'add' ?
+                'Adding...' : 'Updating...'
+                : mode === 'add' ?
+                  'Add Product' : 'Update Product'
+            }
+
           </button>
         </div>
       </form>

@@ -20,14 +20,18 @@ export interface VendorProduct  {
     vendor: number
 }
 
+
 export interface Product  {
     id: number;
+    product_code: string;
+    stock_count: number;
     category_detail?: Category | null;
     vendor_products?: VendorProduct [] | null;
     product_name: string;
     description?: string;
     is_active: boolean;
     image?: string
+    image_url?: string
 }
 
 export interface Paginated {
@@ -42,6 +46,7 @@ export interface Paginated {
 export interface ProductListData  {
     products: Paginated;
     categories: Category[]
+    // vendors: Vendor[]
 }
 
 export interface ProductListApiResponse  {
@@ -53,14 +58,10 @@ export interface ProductListApiResponse  {
 
 export interface ProductFormValues  {
     product_name: string;
-    category: number;
-    vendor: number;
-    vendor_code: string;
-    price: string;
-    cost: string;
-    stock: string;
+    product_code: string;
+    category: number | string;
     description?: string;
-    image?: string;
+    image?: File | null;
 }
 
 

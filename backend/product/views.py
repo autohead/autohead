@@ -10,12 +10,19 @@ from .serializers import (
     ProductSerializer,
     ProductFormSerializer,
     CategoryBriefSerializer,
+    VendorBriefSerializer
 )
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.db.models import Sum
+from django.db import models
+from django.db.models.functions import Coalesce
+from vendors.models import Vendors
+
 
 
 # Create your views here.
-class Pagination(PageNumberPagination):
-    page_size = 10
+class ProductPagination(PageNumberPagination):
+    page_size = 6
     page_size_query_param = "page_size"
     max_page_size = 100
 
@@ -30,7 +37,8 @@ class ProductListCreateView(generics.ListCreateAPIView):
         .order_by("-created_at")
     )
     permission_classes = [IsAuthenticated]
-    pagination_class = Pagination
+    pagination_class = ProductPagination
+    parser_classes = (MultiPartParser, FormParser)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -38,16 +46,26 @@ class ProductListCreateView(generics.ListCreateAPIView):
         return ProductSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().annotate(
+            stock_count=Coalesce(
+                Sum(
+                    "vendor_products__stock",
+                    filter=models.Q(vendor_products__is_active=True),
+                ),
+                0,
+            )
+        )
         page = self.paginate_queryset(queryset)
 
         categories = CategoryBriefSerializer(
             Category.objects.filter(is_active=True), many=True
         ).data
+        
+
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            
+
             return custom_response(
                 data={
                     "products": {
@@ -67,7 +85,9 @@ class ProductListCreateView(generics.ListCreateAPIView):
         # no pagination fallback
         serializer = self.get_serializer(queryset, many=True)
         return custom_response(
-            data={"products": serializer.data, "categories": categories}, method="GET", data_name="products"
+            data={"products": serializer.data, "categories": categories},
+            method="GET",
+            data_name="products",
         )
 
     def create(self, request, *args, **kwargs):
@@ -79,6 +99,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
 
 class ProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
     queryset = (
         Products.objects.filter(is_active=True)
         .select_related("category")

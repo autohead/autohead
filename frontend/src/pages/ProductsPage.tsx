@@ -3,8 +3,13 @@ import { Search, Plus, Edit, Eye } from 'lucide-react';
 import { AddEditProductModal } from '../components/products/AddEditProductModal';
 import { ProductDetailModal } from '../components/products/ProductsDetailsModal';
 import { useProductData } from '../hooks/product';
+import type { Product, ProductFormValues } from '../types/product';
+import Pagination from '../components/common/Pagination';
 import IsLoadingDisplay from '../components/common/IsLoadingDisplay';
 import IsErrorDisplay from '../components/common/IsErrorDisplay';
+import ImagePreviewDialoge from '../components/common/ImagePreviewDialoge';
+import { toast } from 'react-toastify';
+import { getUserFriendlyError } from '../utils/errorHelper';
 
 
 
@@ -16,11 +21,14 @@ export default function ProductsPage() {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
+    const [showImageModal, setShowImageModal] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<any>('');
     const [page, setPage] = useState(1);
 
 
     const {
         data, isLoading, isError,
+        createProduct, isCreating,
     } = useProductData(page);
 
 
@@ -45,16 +53,36 @@ export default function ProductsPage() {
 
     const categories = ['all', ...Array.from(new Set(all_categories.map((p) => p.name)))];
 
-    const handleAddProduct = (productData: any) => {
-        console.log('New product:', productData);
-        alert('Product added successfully!');
+    const handleAddProduct = async (productData: ProductFormValues) => {
+        try {
+            const formDataToSend = new FormData();
+
+            formDataToSend.append('product_name', productData.product_name);
+            formDataToSend.append('product_code', productData.product_code);
+            formDataToSend.append('category', String(productData.category));
+            formDataToSend.append('description', productData.description ?? '');
+
+            if (productData.image) {
+                formDataToSend.append('image', productData.image);
+            }
+
+            // console.log(productData.image);
+
+            await createProduct(formDataToSend).unwrap();
+            toast.success('Product added successfully', { autoClose: 2000 });
+        } catch (err: any) {
+            const errorMessage = getUserFriendlyError(err, 'Failed to add product. Please try again.');
+            toast.error(errorMessage, { autoClose: 2000 });
+            throw err;
+        }
     };
 
 
-    const handleViewProduct = (product: any) => {
+    const handleViewProduct = (product: Product) => {
         setSelectedProduct(product);
         setShowDetailModal(true);
     };
+
 
     return (
         <div className="p-4 lg:p-6">
@@ -100,12 +128,13 @@ export default function ProductsPage() {
                             <thead className="bg-muted/50">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Product Name</th>
-                                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">SKU</th>
+                                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Product Code</th>
                                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Category</th>
-                                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor</th>
+                                    {/* <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor</th> */}
                                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Stock Qty</th>
-                                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Cost Price</th>
-                                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Selling Price</th>
+                                    {/* <th className="px-4 py-3 text-left text-sm text-muted-foreground">Cost Price</th>
+                                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Selling Price</th> */}
+                                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Image</th>
                                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Actions</th>
                                 </tr>
                             </thead>
@@ -115,11 +144,7 @@ export default function ProductsPage() {
                                         <td className="px-4 py-3.5">{product.product_name}</td>
                                         <td className="px-4 py-3.5 text-sm text-muted-foreground">
                                             {
-                                                product.vendor_products?.length
-                                                    ? product.vendor_products.map(vp => (
-                                                        <div key={vp.id}>{vp.vendor_code} - {vp.vendor_detail?.name}</div>
-                                                    ))
-                                                    : '-'
+                                                product.product_code
                                             }
                                         </td>
                                         <td className="px-4 py-3.5">
@@ -127,37 +152,33 @@ export default function ProductsPage() {
                                                 {product.category_detail?.name}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3.5 text-sm">
-                                            {product.vendor_products?.length
-                                                ? product.vendor_products.map(vp => (
-                                                    <div key={vp.id}>{vp.vendor_detail?.name}</div>
-                                                ))
-                                                : '-'}
-                                        </td>
+
                                         <td className="px-4 py-3.5">
-                                            {product.vendor_products?.length
-                                                ? product.vendor_products.map((vp, index) => (
-                                                    <span
-                                                        key={index}
-                                                        className={vp.stock < 20 ? 'text-amber-600' : 'text-green-600'}
-                                                    >
-                                                        {vp.stock}
-                                                    </span>
-                                                ))
-                                                : '-'
-                                            }
+                                            <span
+
+                                                className={product.stock_count < 20 ? 'text-amber-600' : 'text-green-600'}
+                                            >
+                                                {product.stock_count} Nos
+                                            </span>
                                         </td>
-                                        <td className="px-4 py-3.5 text-sm">{product.vendor_products?.length
-                                            ? product.vendor_products.map((vp, index) => (
-                                                <div key={index}>₹{vp.cost}</div>
-                                            ))
-                                            : 0}</td>
+
                                         <td className="px-4 py-3.5">
-                                            {product.vendor_products?.length
-                                                ? product.vendor_products.map((vp, index) => (
-                                                    <div key={index}>₹{vp.price}</div>
-                                                ))
-                                                : 0}
+                                            {product.image ? (
+                                                <img
+                                                    src={product.image_url}
+                                                    alt={product.product_name}
+                                                    className={`w-12 h-12 object-cover rounded-lg ${product.image ? 'cursor-pointer' : ''}`}
+                                                    onClick={
+                                                        () => {
+                                                            setSelectedImage(product.image_url);
+                                                            setShowImageModal(true);
+                                                            setSelectedProduct(product);
+                                                        }
+                                                    }
+                                                />
+                                            ) : (
+                                                <span className="text-muted-foreground">No Image</span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3.5">
                                             <div className="flex items-center gap-2">
@@ -190,31 +211,22 @@ export default function ProductsPage() {
                                 <h3 className="text-foreground">{product.product_name}</h3>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <div>
-                                        <span className="text-muted-foreground">SKU:</span>
+                                        <span className="text-muted-foreground">Product Code:</span>
                                         <p className="mt-0.5">
-                                            {
-                                                product.vendor_products?.length
-                                                    ? product.vendor_products.map(vp => (
-                                                        <span key={vp.id}>{vp.vendor_code}</span>
-                                                    ))
-                                                    : '-'
-                                            }
+                                            {product.product_code}
                                         </p>
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">Stock:</span>
-                                        {product.vendor_products?.length
-                                            ? product.vendor_products.map((vp, index) => (
-                                                <p
-                                                    key={index}
-                                                    className={`mt-0.5 ${vp.stock < 20 ? 'text-amber-600' : 'text-green-600'
-                                                        }`}
-                                                >
-                                                    {vp.stock} units
-                                                </p>
-                                            ))
-                                            : '-'
-                                        }
+
+                                        <p
+
+                                            className={`mt-0.5 ${product.stock_count < 20 ? 'text-amber-600' : 'text-green-600'
+                                                }`}
+                                        >
+                                            {product.stock_count} units
+                                        </p>
+
 
                                     </div>
                                     <div>
@@ -224,34 +236,6 @@ export default function ProductsPage() {
                                                 {product.category_detail?.name}
                                             </span>
                                         </p>
-                                    </div>
-                                    <div>
-                                        <span className="text-muted-foreground">Vendor:</span>
-                                        <p className="mt-0.5">{
-                                            product.vendor_products?.length
-                                                ? product.vendor_products.map(vp => (
-                                                    <span key={vp.id}>{vp.vendor_detail?.name}</span>
-                                                ))
-                                                : '-'
-                                        }</p>
-                                    </div>
-                                    <div>
-                                        <span className="text-muted-foreground">Cost:</span>
-                                        <p className="mt-0.5">{
-                                            product.vendor_products?.length
-                                                ? product.vendor_products.map((vp, index) => (
-                                                    <span key={index}>₹{vp.cost}</span>
-                                                ))
-                                                : 0
-                                        }</p>
-                                    </div>
-                                    <div>
-                                        <span className="text-muted-foreground">Selling:</span>
-                                        <p className="mt-0.5">{product.vendor_products?.length
-                                            ? product.vendor_products.map((vp, index) => (
-                                                <span key={index}>₹{vp.price}</span>
-                                            ))
-                                            : 0}</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2 pt-2">
@@ -288,15 +272,35 @@ export default function ProductsPage() {
             </button>
 
 
+            {/* Pagination */}
+            <Pagination
+                currentPage={current_page}
+                totalPages={total_pages}
+                onPageChange={setPage}
+                onShowLess={() => setPage(1)} // ✅ reset to first page
+                isLoading={isLoading && page > 1}
+            />
+
             <AddEditProductModal
                 isOpen={showAddModal}
                 onClose={() => setShowAddModal(false)}
                 onSave={handleAddProduct}
+                categories={all_categories}
+                mode="add"
+                isSaving={isCreating}
             />
 
             <ProductDetailModal
                 isOpen={showDetailModal}
                 onClose={() => setShowDetailModal(false)}
+                product={selectedProduct}
+                categories={all_categories}
+            />
+
+            <ImagePreviewDialoge
+                isOpen={showImageModal}
+                onCancel={() => setShowImageModal(false)}
+                image={selectedImage}
                 product={selectedProduct}
             />
 

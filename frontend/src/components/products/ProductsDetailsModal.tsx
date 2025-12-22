@@ -1,33 +1,59 @@
+import { useState } from 'react';
 import { Modal } from '../Modal';
-import { Package, DollarSign, TrendingUp, MapPin, Barcode, User, Calendar, AlertTriangle } from 'lucide-react';
-
-interface Product {
-  id: number;
-  name: string;
-  sku: string;
-  category: string;
-  vendor: string;
-  stock: number;
-  costPrice: number;
-  sellingPrice: number;
-  description?: string;
-  barcode?: string;
-  location?: string;
-  minStock?: number;
-}
+import { Package, DollarSign, TrendingUp, MapPin, Barcode, User, AlertTriangle } from 'lucide-react';
+import type { Product, ProductUpdateValues, Category } from '../../types/product';
+import { useProductData } from '../../hooks/product';
+import { AddEditProductModal } from './AddEditProductModal';
+import { toast } from 'react-toastify';
+import { getUserFriendlyError } from '../../utils/errorHelper';
 
 interface ProductDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product | null;
+  categories?: Category[]
 }
 
-export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailModalProps) {
+export function ProductDetailModal({ isOpen, onClose, product, categories }: ProductDetailModalProps) {
+
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  const { updateProduct, isUpdating } = useProductData(1);
+
   if (!product) return null;
 
-  const profit = product.sellingPrice - product.costPrice;
-  const profitMargin = ((profit / product.sellingPrice) * 100).toFixed(1);
-  const isLowStock = product.stock < (product.minStock || 20);
+  const sellingPrice = 10;
+  const costPrice = 5;
+  const profit = sellingPrice - costPrice;
+  const profitMargin = ((profit / sellingPrice) * 100).toFixed(1);
+  const isLowStock = product.stock_count < 20;
+
+
+  const handleUpdateProduct = async (updatedProduct: ProductUpdateValues) => {
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('product_name', updatedProduct.product_name);
+      formDataToSend.append('product_code', updatedProduct.product_code);
+      formDataToSend.append('category', String(updatedProduct.category));
+      formDataToSend.append('description', updatedProduct.description ?? '');
+
+      if (updatedProduct.image instanceof File) {
+        formDataToSend.append('image', updatedProduct.image);
+      }
+      await updateProduct({
+        id: product.id,
+        product: formDataToSend
+      }).unwrap();
+      toast.success('Product updated successfully', { autoClose: 2000 });
+      onClose();
+    } catch (err: any) {
+      const errorMessage = getUserFriendlyError(err, 'Failed to Update product. Please try again.');
+      toast.error(errorMessage, { autoClose: 2000 });
+      throw err;
+    }
+  };
+
+
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Product Details" size="lg">
@@ -35,12 +61,12 @@ export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailMo
         {/* Header Section */}
         <div className="flex items-start justify-between pb-5 border-b border-border">
           <div>
-            <h3 className="text-foreground mb-1">{product.name}</h3>
+            <h3 className="text-foreground mb-1">{product.product_name}</h3>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span>SKU: {product.sku}</span>
+              <span>SKU: {product.product_code}</span>
               <span>•</span>
               <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded">
-                {product.category}
+                {product.category_detail?.name}
               </span>
             </div>
           </div>
@@ -61,7 +87,7 @@ export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailMo
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Stock</p>
-                <p className="text-blue-600">{product.stock} units</p>
+                <p className="text-blue-600">{product.stock_count} units</p>
               </div>
             </div>
           </div>
@@ -73,7 +99,7 @@ export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailMo
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Selling Price</p>
-                <p className="text-green-600">₹{product.sellingPrice.toLocaleString()}</p>
+                <p className="text-green-600">₹{sellingPrice}</p>
               </div>
             </div>
           </div>
@@ -97,7 +123,7 @@ export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailMo
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Vendor</p>
-                <p className="text-orange-600 text-sm truncate">{product.vendor}</p>
+                <p className="text-orange-600 text-sm truncate">v</p>
               </div>
             </div>
           </div>
@@ -106,49 +132,49 @@ export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailMo
         {/* Details Section */}
         <div className="space-y-4">
           <h4>Product Information</h4>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Cost Price */}
             <div className="bg-accent/50 rounded-lg p-4">
               <p className="text-sm text-muted-foreground mb-1">Cost Price</p>
-              <p>₹{product.costPrice.toLocaleString()}</p>
+              <p>₹{costPrice}</p>
             </div>
 
             {/* Profit per Unit */}
             <div className="bg-accent/50 rounded-lg p-4">
               <p className="text-sm text-muted-foreground mb-1">Profit per Unit</p>
-              <p className="text-green-600">₹{profit.toLocaleString()}</p>
+              <p className="text-green-600">₹{profit}</p>
             </div>
 
             {/* Minimum Stock */}
-            {product.minStock && (
-              <div className="bg-accent/50 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Minimum Stock Level</p>
-                <p>{product.minStock} units</p>
-              </div>
-            )}
+
+            <div className="bg-accent/50 rounded-lg p-4">
+              <p className="text-sm text-muted-foreground mb-1">Minimum Stock Level</p>
+              <p>20 units</p>
+            </div>
+
 
             {/* Barcode */}
-            {product.barcode && (
-              <div className="bg-accent/50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Barcode className="w-4 h-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Barcode</p>
-                </div>
-                <p>{product.barcode}</p>
+
+            <div className="bg-accent/50 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Barcode className="w-4 h-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Barcode</p>
               </div>
-            )}
+              <p>BarCode</p>
+            </div>
+
 
             {/* Storage Location */}
-            {product.location && (
-              <div className="bg-accent/50 rounded-lg p-4 md:col-span-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Storage Location</p>
-                </div>
-                <p>{product.location}</p>
+
+            <div className="bg-accent/50 rounded-lg p-4 md:col-span-2">
+              <div className="flex items-center gap-2 mb-1">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Storage Location</p>
               </div>
-            )}
+              <p>Location</p>
+            </div>
+
           </div>
 
           {/* Description */}
@@ -174,7 +200,7 @@ export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailMo
             </div>
             <div className="text-center p-4 bg-accent/50 rounded-lg">
               <p className="text-sm text-muted-foreground mb-1">Revenue</p>
-              <p>₹{(product.sellingPrice * 234).toLocaleString()}</p>
+              <p>₹{(sellingPrice * 234).toFixed(2)}</p>
             </div>
             <div className="text-center p-4 bg-accent/50 rounded-lg">
               <p className="text-sm text-muted-foreground mb-1">Last Sold</p>
@@ -185,7 +211,11 @@ export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailMo
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-5 border-t border-border">
-          <button className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+          <button
+            onClick={() => {
+              setShowUpdateModal(true);
+            }}
+            className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
             Edit Product
           </button>
           <button className="flex-1 px-4 py-2.5 border border-border rounded-lg hover:bg-accent transition-colors">
@@ -196,6 +226,17 @@ export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailMo
           </button>
         </div>
       </div>
+
+
+      <AddEditProductModal
+        isOpen={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+        products={product}
+        isSaving={isUpdating}
+        mode='edit'
+        onSave={handleUpdateProduct}
+        categories={categories}
+      />
     </Modal>
   );
 }

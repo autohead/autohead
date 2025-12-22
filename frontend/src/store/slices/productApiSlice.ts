@@ -1,7 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
 import { HttpMethod } from "../../constants";
-import type { ProductListApiResponse, ProductListData, Product, ProductFormValues, ProductUpdateValues  } from "../../types/product";
+import type { ProductListApiResponse, ProductListData, Product  } from "../../types/product";
 
 export const productApiSlice = createApi({
     reducerPath: "productApi",
@@ -19,7 +19,9 @@ export const productApiSlice = createApi({
         }),
 
         // create Product
-        createProduct: builder.mutation<Product, ProductFormValues>({
+        // Switched from ProductFormValues to FormData since this API call includes an image upload.
+        // Plain objects cannot handle files; FormData is needed for multipart/form-data.
+        createProduct: builder.mutation<Product, FormData>({
             query: (product) => ({
                 url: "/products/",
                 method: HttpMethod.POST,
@@ -29,9 +31,9 @@ export const productApiSlice = createApi({
         }),
 
         // update Product
-        updateProduct: builder.mutation<Product, ProductUpdateValues>({
-            query: (product) => ({
-                url: `/products/${product.id}/`,
+        updateProduct: builder.mutation<Product, {id: number,product: FormData}>({
+            query: ({id, product}) => ({
+                url: `/products/${id}/`,
                 method: HttpMethod.PATCH,
                 body: product,
             }),
@@ -56,3 +58,6 @@ export const {
     useUpdateProductMutation,
     useDeleteProductMutation
 } = productApiSlice
+
+
+
