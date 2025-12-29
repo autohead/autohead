@@ -1,7 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
 import { HttpMethod } from "../../constants";
-import type{ VendorProductFormValues, VendorProduct } from "../../types/vendorProduct";
+import type{ VendorProductFormValues, VendorProduct, VendorProductUpdateValues } from "../../types/vendorProduct";
 
 
 
@@ -19,12 +19,20 @@ export const vendorProductApiSlice = createApi({
                 method: HttpMethod.POST,
                 body: vendorProduct,
             }),
-            invalidatesTags: ["vendorProduct"],
+        }),
+
+        updateVendorProductStock: builder.mutation<void,VendorProductUpdateValues>({
+            query: (vendorProductUpdate) => ({
+                url: `/products/vendor_products/${vendorProductUpdate.id}/`,
+                method: HttpMethod.PATCH,
+                body: vendorProductUpdate,
+            }),
         }),
     }),
 });
 
 export const {
     useCreateVendorProductMutation,
+    useUpdateVendorProductStockMutation,
 } = vendorProductApiSlice;
 

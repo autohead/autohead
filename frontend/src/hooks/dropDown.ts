@@ -5,10 +5,10 @@ import {
 
 export function useDropDownData() {
     
-    const { data, isLoading, isError } = useGetDropDownListDataQuery();
+    const { data, isLoading, isError, refetch } = useGetDropDownListDataQuery();
 
     return {
-        data, isLoading, isError
+        data, isLoading, isError, refetch
     };
 
 }

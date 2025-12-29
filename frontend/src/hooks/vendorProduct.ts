@@ -1,11 +1,13 @@
-import { useCreateVendorProductMutation } from "../store/slices/vendorProductsApiSlice";
+import { useCreateVendorProductMutation, useUpdateVendorProductStockMutation } from "../store/slices/vendorProductsApiSlice";
 
 export const useVendorProductData = () => {
 
     const [createVendorProductData, { isLoading: isCreating }] = useCreateVendorProductMutation();
+    const [updateVendorProductStock, { isLoading: isUpdating }] = useUpdateVendorProductStockMutation();
 
     return {
-        createVendorProductData, isCreating
+        createVendorProductData, isCreating,
+        updateVendorProductStock, isUpdating
     }
 }
 

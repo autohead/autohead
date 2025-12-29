@@ -25,6 +25,12 @@ class ProductBriefSerializer(serializers.ModelSerializer):
     class Meta:
         model = Products
         fields = ["id", "product_name"]
+        
+class VendorProductBriefSerializer(serializers.ModelSerializer):
+    vendor_detail = VendorBriefSerializer(read_only=True, source="vendor")
+    class Meta:
+        model = VendorProducts
+        fields = ["id", "vendor", "stock", "product", "vendor_detail"]
 
 
 class VendorProductSerializer(serializers.ModelSerializer):
@@ -177,8 +183,21 @@ class VendorProductFormSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
 
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        if "stock" in validated_data:
+            stock_delta = validated_data.pop("stock")
+            new_stock = instance.stock + stock_delta
 
+            if new_stock < 0:
+                raise serializers.ValidationError(
+                    {"stock": "Stock cannot be negative."}
+                )
+
+            instance.stock = new_stock
+
+        # ✅ Update allowed fields normally
+        for field in ["price", "cost", "vendor_code"]:
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
+
+        instance.save()
         return instance

@@ -6,13 +6,13 @@ import {
 } from '../store/slices/vendorApiSlice';
 
 export function useVendorData(page: number) {
-    const { data, isLoading, isError } = useGetVendorsQuery({ page });
+    const { data, isLoading, isError , refetch } = useGetVendorsQuery({ page });
     const [createVendor, { isLoading: isCreating }] = useCreateVendorMutation();
     const [updateVendor, { isLoading: isUpdating }] = useUpdateVendorMutation();
     const [deleteVendor, { isLoading: isDeleting }] = useDeleteVendorMutation();
 
     return {
-        data, isLoading, isError,
+        data, isLoading, isError, refetch,
 
         isCreating, createVendor,
 

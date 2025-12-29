@@ -27,7 +27,10 @@ export interface VendorProductFormValues  {
     vendor: number | string
 }
 
-export interface VendorProductUpdateValues extends VendorProductFormValues {
+
+type VendorProductStockFormValues = Pick<VendorProduct,  'stock'>;
+
+export interface VendorProductUpdateValues extends VendorProductStockFormValues {
     id: number
 }
 

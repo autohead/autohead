@@ -12,6 +12,7 @@ from .serializers import (
     CategoryBriefSerializer,
     VendorBriefSerializer,
     ProductBriefSerializer,
+    VendorProductBriefSerializer,
     VendorProductFormSerializer,
     VendorProductRead,
 )
@@ -143,10 +144,15 @@ class DropdownDataList(generics.ListAPIView):
             Vendors.objects.filter(is_active=True), many=True
         ).data
         
+        vendor_products = VendorProductBriefSerializer(
+            VendorProducts.objects.filter(is_active=True), many=True
+        ).data
+        
         return custom_response(
             data={
                 "products": products,
                 "vendors": vendor_data,
+                "vendor_products": vendor_products,
             },
             method="GET",
             data_name="dropdown_data",
@@ -183,3 +189,28 @@ class VendorProductListCreateView(generics.ListCreateAPIView):
         return custom_response(
             data=serializer.data, method="POST", data_name="VendorProduct"
         )
+        
+class VendorProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = (
+        VendorProducts.objects.filter(is_active=True)
+        .select_related("product", "vendor")
+    )
+    serializer_class = VendorProductFormSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", True)  # allow partial update
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return custom_response(
+            data=serializer.data, method="PUT", data_name="VendorProduct"
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_active = not instance.is_active
+        instance.save(update_fields=["is_active"])
+        method = "DEACTIVATE" if instance.is_active else "REACTIVATE"
+        return custom_response(data=None, method=method, data_name="VendorProduct")
