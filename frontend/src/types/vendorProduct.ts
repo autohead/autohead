@@ -1,11 +1,14 @@
 
-import type{ Vendor } from "./product";
+import type{ Vendor, Product } from "./product";
+
+type ProductBasic = Pick<Product, 'id' | 'product_name'>;
 
 
 export interface VendorProduct  {
     id: number;
     vendor_code: string;
     vendor_detail?: Vendor | null;
+    product_detail?: ProductBasic | null;
     price: number,
     cost: number,
     stock: number,

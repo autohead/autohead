@@ -1,6 +1,16 @@
 from rest_framework import serializers
 from .models import Vendors, Bank
+from product.models import VendorProducts
+from product.serializers import ProductBriefSerializer, VendorBriefSerializer
 
+
+class VendorProductSerializer(serializers.ModelSerializer):
+    vendor_detail = VendorBriefSerializer(read_only=True, source="vendor")
+    product_detail = ProductBriefSerializer(read_only=True, source="product")
+    class Meta:
+        model = VendorProducts
+        fields = "__all__"
+        read_only_fields = ["id", "created_at", "updated_at", "product"]
 
 
 class BankSerializer(serializers.ModelSerializer):
@@ -13,6 +23,8 @@ class BankSerializer(serializers.ModelSerializer):
         
 class VendorSerializer(serializers.ModelSerializer):
     bank= BankSerializer(required=False)
+    vendor_products = VendorProductSerializer(many=True, read_only=True)
+   
     class Meta:
         model = Vendors
         fields = '__all__'

@@ -141,29 +141,32 @@ class VendorProductFormSerializer(serializers.ModelSerializer):
         model = VendorProducts
         fields = "__all__"
         read_only_fields = ["id", "created_at", "updated_at"]
-
+        
+        
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=VendorProducts.objects.all(),
+                fields=["vendor", "vendor_code"],
+                message="This vendor code already exists for this vendor.",
+            ),
+            
+            serializers.UniqueTogetherValidator(
+                queryset=VendorProducts.objects.all(),
+                fields=["vendor", "product"],
+                message="This vendor already has this product.",
+            ),
+        ]
+    
+    
     def validate(self, attrs):
-        vendor = attrs.get("vendor")
-        product = attrs.get("product")
-        vendor_code = attrs.get("vendor_code")
+        cost = attrs.get("cost")
+        selling_price = attrs.get("price")
 
-        if (
-            VendorProducts.objects.filter(
-                vendor=vendor, product=product,
-            )
-            .exclude(pk=self.instance.pk if self.instance else None)
-            .exists()
-        ):
+        if selling_price and cost and cost > selling_price:
             raise serializers.ValidationError(
-                "This vendor already has this product with the same vendor code."
+                "Cost cannot be greater than selling price."
             )
 
-        if (
-            VendorProducts.objects.filter(vendor=vendor, product=product)
-            .exclude(pk=self.instance.pk if self.instance else None)
-            .exists()
-        ):
-            raise serializers.ValidationError("This vendor already has this product.")
         return attrs
 
     @transaction.atomic

@@ -34,15 +34,12 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
     isUpdating,
   } = useVendorData(1);
 
+  console.log('VendorDetailModal vendor:', vendor);
+
 
   if (!vendor) return null;
 
   const outstandingBalance = 145000;
-  const recentTransactions = [
-    { id: 1, date: '2024-12-08', type: 'Purchase', amount: 45000, invoice: 'PO-1234' },
-    { id: 2, date: '2024-12-05', type: 'Payment', amount: -30000, invoice: 'PAY-456' },
-    { id: 3, date: '2024-12-01', type: 'Purchase', amount: 67000, invoice: 'PO-1230' },
-  ];
 
   const handleUpdateVendor = async (VendorData: FlatVendorForm) => {
     try {
@@ -97,7 +94,7 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Products</p>
-                <p className="text-blue-600">0</p>
+                <p className="text-blue-600">{vendor.vendor_products?.length || 0}</p>
               </div>
             </div>
           </div>
@@ -187,52 +184,88 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
 
         {/* Recent Transactions */}
         <div className="pt-5 border-t border-border">
-          <h4 className="mb-4">Recent Transactions</h4>
-          <div className="space-y-2">
-            {recentTransactions.map((transaction) => (
+          <h4 className="mb-4">Vendor Products</h4>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Product Name</th>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor Code</th>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Cost</th>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Price</th>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Stock</th>
+
+
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {vendor.vendor_products?.map((v) => (
+                    <tr key={v.id} className="hover:bg-accent/50 transition-colors">
+                      <td className="px-4 py-3.5">{v.product_detail?.product_name}</td>
+                      <td className="px-4 py-3.5 text-sm text-muted-foreground">{v.vendor_code}</td>
+                      <td className="px-4 py-3.5 text-sm text-muted-foreground">{v.cost}</td>
+                      <td className="px-4 py-3.5 text-center">{v.price}</td>
+                      <td className="px-4 py-3.5 text-center">
+                        <span
+                          className={`${v.stock < 20 ? 'text-amber-600' : 'text-green-600'
+                            }`}
+                        >
+                          {v.stock}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {vendor.vendor_products?.map((v) => (
               <div
-                key={transaction.id}
-                className="flex items-center justify-between p-4 bg-accent/50 rounded-lg"
+                key={v.id}
+                className="bg-card rounded-xl p-4 border border-border shadow-sm"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`px-2 py-0.5 rounded text-xs ${transaction.type === 'Purchase'
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'bg-green-50 text-green-700'
-                      }`}>
-                      {transaction.type}
-                    </span>
-                    <span className="text-sm text-muted-foreground">{transaction.invoice}</span>
+                {/* Product Name */}
+                <h3 className="text-center mb-3">{v.product_detail?.product_name}</h3>
+
+                {/* Label-Value Pairs */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Vendor Code</span>
+                    <span>{v.vendor_code}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{transaction.date}</p>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Cost</span>
+                    <span>{v.cost}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Price</span>
+                    <span>{v.price}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Stock</span>
+                    <span className={v.stock < 20 ? 'text-amber-600' : 'text-green-600'}>
+                      {v.stock}
+                    </span>
+                  </div>
                 </div>
-                <p className={`${transaction.amount > 0 ? 'text-destructive' : 'text-green-600'
-                  }`}>
-                  {transaction.amount > 0 ? '+' : ''}₹{Math.abs(transaction.amount).toLocaleString()}
-                </p>
               </div>
             ))}
           </div>
+
+          {vendor.vendor_products?.length === 0 && (
+            <div className="bg-card rounded-xl p-12 text-center border border-border">
+              <p className="text-muted-foreground">No products found.</p>
+            </div>
+          )}
+
         </div>
 
-        {/* Top Products from Vendor */}
-        <div className="pt-5 border-t border-border">
-          <h4 className="mb-4">Top Products from Vendor</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-accent/50 rounded-lg p-4 text-center">
-              <p className="text-sm text-muted-foreground mb-1">LED Headlight Kit</p>
-              <p>156 units</p>
-            </div>
-            <div className="bg-accent/50 rounded-lg p-4 text-center">
-              <p className="text-sm text-muted-foreground mb-1">Premium Floor Mats</p>
-              <p>234 units</p>
-            </div>
-            <div className="bg-accent/50 rounded-lg p-4 text-center">
-              <p className="text-sm text-muted-foreground mb-1">Steering Wheel Cover</p>
-              <p>189 units</p>
-            </div>
-          </div>
-        </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-5 border-t border-border">
@@ -244,10 +277,7 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
             Edit Vendor
           </button>
           <button className="flex-1 px-4 py-2.5 border border-border rounded-lg hover:bg-accent transition-colors">
-            View All Transactions
-          </button>
-          <button className="flex-1 px-4 py-2.5 border border-border rounded-lg hover:bg-accent transition-colors">
-            Record Payment
+            View All Returns
           </button>
         </div>
       </div>

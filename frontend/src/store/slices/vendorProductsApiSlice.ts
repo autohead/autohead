@@ -1,7 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
 import { HttpMethod } from "../../constants";
-import type{ VendorProductFormValues, VendorProduct, VendorProductUpdateValues } from "../../types/vendorProduct";
+import type{ VendorProductFormValues, VendorProduct } from "../../types/vendorProduct";
 
 
 
@@ -19,6 +19,7 @@ export const vendorProductApiSlice = createApi({
                 method: HttpMethod.POST,
                 body: vendorProduct,
             }),
+            invalidatesTags: ["vendorProduct"],
         }),
     }),
 });

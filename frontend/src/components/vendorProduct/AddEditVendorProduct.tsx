@@ -27,8 +27,8 @@ export function AddEditVendorProduct({ isOpen, onClose, onSave, isSaving, mode, 
     const { data, isLoading } = useDropDownData();
     const { createVendorProductData, isCreating } = useVendorProductData()
 
-    const vendors : DropDownListData['vendors'] = data?.vendors || [];
-    const products : DropDownListData['products'] = data?.products || [];
+    const vendors: DropDownListData['vendors'] = data?.vendors || [];
+    const products: DropDownListData['products'] = data?.products || [];
 
 
     const [formData, setFormData] = useState({
@@ -44,9 +44,7 @@ export function AddEditVendorProduct({ isOpen, onClose, onSave, isSaving, mode, 
 
 
 
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
+
 
 
 
@@ -63,13 +61,27 @@ export function AddEditVendorProduct({ isOpen, onClose, onSave, isSaving, mode, 
     };
 
     const validateForm = () => {
+        const cost = Number(formData.cost);
+        const price = Number(formData.price);
+        const stock = Number(formData.stock);
         const newErrors: Record<string, string> = {};
         if (!formData.vendor) newErrors.vendor = 'Vendor is required';
         if (!formData.product) newErrors.product = 'Product is required';
         if (!formData.vendor_code.trim()) newErrors.vendor_code = 'Vendor code is required';
-        if (formData.price <= 0) newErrors.price = 'Price must be greater than zero';
-        if (formData.cost <= 0) newErrors.cost = 'Cost cannot be negative';
-        if (formData.stock < 0) newErrors.stock = 'Stock cannot be negative';
+        if (price <= 0) newErrors.price = 'Price must be greater than zero';
+        if (cost <= 0) newErrors.cost = 'Cost must be greater than zero';
+        if (stock < 0) newErrors.stock = 'Stock cannot be negative';
+
+        if (
+            price > 0 &&
+            cost > 0 &&
+            cost > price
+        ) {
+            newErrors.cost = 'Cost cannot be greater than price';
+            newErrors.price = 'Price cannot be less than cost';
+        }
+
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -101,6 +113,12 @@ export function AddEditVendorProduct({ isOpen, onClose, onSave, isSaving, mode, 
         setErrors({});
         onClose();
     };
+
+
+
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
 
 
     return (

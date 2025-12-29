@@ -177,10 +177,7 @@ class VendorProductListCreateView(generics.ListCreateAPIView):
         )
 
     def create(self, request, *args, **kwargs):
-        # print("RAW DATA:", request.data)
-        
         serializer = self.get_serializer(data=request.data)
-        print("SERIALIZER USED 👉", serializer.__class__.__name__)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return custom_response(

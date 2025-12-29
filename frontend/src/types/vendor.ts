@@ -1,3 +1,4 @@
+import type { VendorProduct } from "./vendorProduct";
 
 export interface BankResponse {
     id?: number;
@@ -19,6 +20,7 @@ export interface BankInput {
 export interface VendorResponse {
     id: number;
     bank?: BankResponse | null;
+    vendor_products?: VendorProduct[] | null;
     name: string;
     phone: number;
     email: string;

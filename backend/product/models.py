@@ -53,7 +53,7 @@ class Products(models.Model):
                 
 class VendorProducts(models.Model):
     product = models.ForeignKey(Products, on_delete=models.CASCADE , related_name='vendor_products' )
-    vendor = models.ForeignKey(Vendors, on_delete=models.CASCADE)
+    vendor = models.ForeignKey(Vendors, on_delete=models.CASCADE, related_name='vendor_products' )
     vendor_code = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
