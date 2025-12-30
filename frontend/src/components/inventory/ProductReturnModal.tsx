@@ -163,7 +163,7 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
               />
             </FormField>
 
-            <FormField label="Return Type" required>
+            <FormField label="Vendor" required>
               <Select
                 name="returnType"
                 value={formData.returnType}

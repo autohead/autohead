@@ -34,8 +34,6 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
     isUpdating,
   } = useVendorData(1);
 
-  console.log('VendorDetailModal vendor:', vendor);
-
 
   if (!vendor) return null;
 

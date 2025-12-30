@@ -3,7 +3,7 @@ import type{ Product, Vendor } from "./product";
 import type {VendorProduct} from "./vendorProduct";
 
 type ProductBasic = Pick<Product, 'id' | 'product_name'>;
-type VendorProductBasic = Pick<VendorProduct, 'id' | 'vendor' | 'stock' | 'product' | 'vendor_detail'>;
+type VendorProductBasic = Pick<VendorProduct, 'id' | 'vendor' | 'stock' | 'product' | 'vendor_detail' | 'price'>;
 
 export interface DropDownListData  {
     products : ProductBasic[];

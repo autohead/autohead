@@ -30,7 +30,7 @@ class VendorProductBriefSerializer(serializers.ModelSerializer):
     vendor_detail = VendorBriefSerializer(read_only=True, source="vendor")
     class Meta:
         model = VendorProducts
-        fields = ["id", "vendor", "stock", "product", "vendor_detail"]
+        fields = ["id", "vendor", "stock", "product", "vendor_detail", "price"]
 
 
 class VendorProductSerializer(serializers.ModelSerializer):

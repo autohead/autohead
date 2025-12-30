@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     "product",
     "vendors",
     "authentication",
+    "bill",
+    "productReturn",
     
     # cloudinary
     "cloudinary",

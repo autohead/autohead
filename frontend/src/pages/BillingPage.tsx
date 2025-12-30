@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Search, Plus, Minus, Trash2, ShoppingCart, DollarSign, Eye } from 'lucide-react';
+import { useDropDownData } from '../hooks/dropDown';
+import type { DropDownListData } from '../types/dropDown';
 
 interface CartItem {
     id: number;
@@ -35,17 +37,49 @@ export default function BillingPage() {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [discount, setDiscount] = useState(0);
     const [customerName, setCustomerName] = useState('');
+    const { data, isLoading, refetch: dropDownRefetch, } = useDropDownData();
+
+    const products: DropDownListData['products'] = data?.products || [];
+    const vendorProducts: DropDownListData['vendor_products'] = data?.vendor_products || [];
 
 
-    const filteredProducts = availableProducts.filter(
-        (product) =>
-            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.sku.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Get products by ID
+    const productsById = useMemo(() => {
+        return (products || []).reduce((acc: Record<number, typeof products[0]>, product) => {
+            acc[product.id] = product;
+            return acc;
+        }, {});
+    }, [data]);
+
+    // Map vendor products to include stock info
+    const productsWithStock = useMemo(() => {
+        return (vendorProducts || []).map((vp) => ({
+            id: vp.id,
+            product_name: productsById[vp.product]?.product_name,
+            stock: vp.stock,
+            price:vp.price,
+        }));
+    }, [vendorProducts, productsById]);
+
+    // Filter products based on search term
+    const filteredProducts = useMemo(() => {
+        return productsWithStock.filter(
+            (product) =>
+                product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [searchTerm]);
 
 
-    const addToCart = (product: typeof availableProducts[0]) => {
+    const addToCart = (product: typeof productsWithStock[0]) => {
         const existingItem = cart.find((item) => item.productId === product.id);
+        const availableStock = product.stock;
+
+        // Check stock before adding
+        if (existingItem && existingItem.quantity >= availableStock || (!existingItem && availableStock <= 0)) {
+            alert('Cannot add more items than available in stock.');
+            return;
+        }
+        
         if (existingItem) {
             setCart(
                 cart.map((item) =>
@@ -60,8 +94,8 @@ export default function BillingPage() {
                 {
                     id: Date.now(),
                     productId: product.id,
-                    name: product.name,
-                    sku: product.sku,
+                    name: product.product_name,
+                    sku: "suku",
                     price: product.price,
                     quantity: 1,
                 },
@@ -133,11 +167,11 @@ export default function BillingPage() {
                                     className="flex items-center justify-between p-3 hover:bg-accent rounded-lg cursor-pointer transition-colors"
                                 >
                                     <div className="flex-1">
-                                        <p>{product.name}</p>
-                                        <p className="text-sm text-muted-foreground">{product.sku} • Stock: {product.stock}</p>
+                                        <p>{product.product_name}</p>
+                                        <p className="text-sm text-muted-foreground">suk • Stock: {product.stock}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p>₹{product.price.toLocaleString()}</p>
+                                        <p>₹{product.price}</p>
                                         <Plus className="w-4 h-4 ml-auto text-primary" />
                                     </div>
                                 </div>
@@ -298,7 +332,7 @@ export default function BillingPage() {
                 </div>
 
                 {/* Mobile Cards */}
-                
+
             </div>
         </div>
     )
