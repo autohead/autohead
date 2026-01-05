@@ -2,7 +2,8 @@ import {
     useCreateProductMutation,
     useDeleteProductMutation,
     useGetProductsQuery,
-    useUpdateProductMutation
+    useUpdateProductMutation,
+    useGetProductSalesAnalysisQuery
 } from "../store/slices/productApiSlice";
 
 
@@ -11,6 +12,7 @@ export function useProductData(page: number) {
     const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
     const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
     const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
+    
 
     return {
         data, isLoading, isError,
@@ -19,6 +21,11 @@ export function useProductData(page: number) {
 
         isUpdating, updateProduct,
 
-        isDeleting, deleteProduct
+        isDeleting, deleteProduct,
     };
+}
+
+export function useProductSalesAnalysis(id: number) {
+    const { data, isLoading, isError } = useGetProductSalesAnalysisQuery({ id });
+    return { data, isLoading, isError };
 }

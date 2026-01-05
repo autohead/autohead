@@ -4,6 +4,7 @@ from vendors.models import Vendors
 from category.models import Category
 from django.db import transaction
 import cloudinary.uploader
+from bill.models import Bill, BillItem
 
 
 # Lightweight serializers used for nested read-only representation.
@@ -200,3 +201,12 @@ class VendorProductFormSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+# Serializer for product sales analysis response
+class ProductSalesAnalysisSerializer(serializers.Serializer):
+    productId = serializers.IntegerField()
+    total_sales = serializers.IntegerField()
+    total_revenue = serializers.DecimalField(decimal_places=2 , max_digits=12)
+    this_month_sales = serializers.IntegerField()
+    last_2day_sales = serializers.IntegerField()

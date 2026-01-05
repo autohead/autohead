@@ -1,7 +1,8 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
 import { HttpMethod } from "../../constants";
-import type { ProductListApiResponse, ProductListData, Product  } from "../../types/product";
+import type { ProductListApiResponse, ProductListData, Product, ProductAnalysisApiResponse  } from "../../types/product";
+
 
 export const productApiSlice = createApi({
     reducerPath: "productApi",
@@ -48,6 +49,19 @@ export const productApiSlice = createApi({
             }),
             invalidatesTags: ["Product"],
         }),
+
+
+        // product sales analysis 
+        getProductSalesAnalysis: builder.query<any, {id: number}>({
+            query: ({id}) => {
+                return {
+                    url: `/products/${id}/sales-analysis/`,
+                    method: HttpMethod.GET,
+                };
+            },
+            transformResponse: (response: ProductAnalysisApiResponse) => response.data,
+            providesTags: ["Product"],
+        }),
     })
 
 });
@@ -56,7 +70,8 @@ export const {
     useGetProductsQuery,
     useCreateProductMutation,
     useUpdateProductMutation,
-    useDeleteProductMutation
+    useDeleteProductMutation,
+    useGetProductSalesAnalysisQuery
 } = productApiSlice
 
 

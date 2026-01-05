@@ -56,6 +56,18 @@ export interface ProductListApiResponse  {
 }
 
 
+export interface ProductAnalysisApiResponse  {
+    success: boolean;
+    message: string;
+    data: {
+        productId: number;
+        total_sales: number;
+        total_revenue: string;
+        this_month_sales: number;
+        last_2day_sales: number;
+    };
+}
+
 export interface ProductFormValues  {
     product_name: string;
     product_code: string;

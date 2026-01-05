@@ -1,25 +1,17 @@
-import { useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Modal } from '../Modal';
 import { FormField, Input, TextArea, Select } from '../FormField';
 import { Save, X, Search } from 'lucide-react';
+import { useDropDownData } from '../../hooks/dropDown';
+import type { DropDownListData } from '../../types/dropDown';
+
 
 interface ProductReturnModalProps {
   isOpen: boolean;
   onClose: () => void;
-  
+
 }
 
-const mockProducts = [
-  { value: '', label: 'Select Product' },
-  { value: 'ACC-001', label: 'Premium Floor Mats (ACC-001)' },
-  { value: 'ACC-045', label: 'LED Headlight Kit (ACC-045)' },
-  { value: 'ACC-089', label: 'Car Cover Waterproof (ACC-089)' },
-  { value: 'ACC-112', label: 'Phone Mount Magnetic (ACC-112)' },
-  { value: 'ACC-156', label: 'Dash Camera HD (ACC-156)' },
-  { value: 'ACC-201', label: 'Seat Covers Leather (ACC-201)' },
-  { value: 'ACC-267', label: 'Tire Pressure Monitor (ACC-267)' },
-  { value: 'ACC-298', label: 'Steering Wheel Cover (ACC-298)' },
-];
 
 const returnReasons = [
   { value: '', label: 'Select Reason' },
@@ -32,16 +24,22 @@ const returnReasons = [
 ];
 
 const returnTypes = [
-  { value: 'vendor', label: 'Return to Vendor' },
-  { value: 'write_off', label: 'Write Off' },
-  { value: 'exchange', label: 'Exchange' },
+  { value: '1', label: 'Sold' },
+  { value: '2', label: 'Not Sold' },
 ];
 
 export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps) {
+
+  const { data, isLoading } = useDropDownData();
+
+  const products: DropDownListData['products'] = data?.products || [];
+  const vendorProducts: DropDownListData['vendor_products'] = data?.vendor_products || [];
+
   const [formData, setFormData] = useState({
-    productSku: '',
+    product: '',
+    vendor: '',
     quantity: '',
-    returnType: 'vendor',
+    return_type: '',
     reason: '',
     billNumber: '',
     customerName: '',
@@ -49,24 +47,54 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
     notes: '',
   });
 
+  // Return Vendor to empty when Product changes
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, vendor: "" }));
+   
+  }, [formData.product]);
+
+
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+ 
+
+
+
+  // Product
+  const selectedProduct = useMemo(() => {
+    return products.find((p) => p.id.toString() === formData.product);
+  }, [products, formData.product]);
+
+  // Vendors
+  const filteredVendors = useMemo(() => {
+    if (!formData.product) return [];
+    return vendorProducts.filter((vp) => vp.product.toString() === formData.product);
+  }, [formData.product, vendorProducts]);
+
+  // Vendor Product
+  const selectedVendorProduct = useMemo(() => {
+    if (!formData.product || !formData.vendor) return null;
+
+    return vendorProducts.find(
+      vp =>
+        vp.product.toString() === formData.product &&
+        vp.vendor.toString() === formData.vendor
+
+    );
+  }, [vendorProducts, formData.product, formData.vendor]);
+
+  const vendorProductId = selectedVendorProduct?.id ?? "";
+  const stock = selectedVendorProduct?.stock ?? 0;
+  const price = selectedVendorProduct?.price ?? 0;
+  const productName = selectedProduct?.product_name ?? '';
+
+
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    if (name === 'productSku' && value) {
-      // Mock product data lookup
-      setSelectedProduct({
-        name: mockProducts.find(p => p.value === value)?.label || '',
-        stock: 45,
-        price: 1200,
-      });
-    }
-    
+
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
@@ -75,12 +103,12 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.productSku) newErrors.productSku = 'Product is required';
+    if (!formData.product) newErrors.product = 'Product is required';
     if (!formData.quantity || Number(formData.quantity) <= 0)
       newErrors.quantity = 'Valid quantity is required';
     if (!formData.reason) newErrors.reason = 'Return reason is required';
-    
-    if (formData.returnType === 'vendor' && !formData.billNumber.trim())
+
+    if (formData.return_type === '1' && !formData.billNumber.trim())
       newErrors.billNumber = 'Bill number is required for vendor returns';
 
     setErrors(newErrors);
@@ -97,16 +125,16 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
 
   const handleClose = () => {
     setFormData({
-      productSku: '',
+      product: '',
+      vendor: '',
       quantity: '',
-      returnType: 'vendor',
+      return_type: '',
       reason: '',
       billNumber: '',
       customerName: '',
       refundAmount: '',
       notes: '',
     });
-    setSelectedProduct(null);
     setErrors({});
     onClose();
   };
@@ -119,37 +147,35 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
           <h4 className="mb-4 pb-2 border-b border-border">Product Information</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="md:col-span-2">
-              <FormField label="Select Product" required error={errors.productSku}>
+              <FormField label="Select Product" required error={errors.product}>
                 <Select
-                  name="productSku"
-                  value={formData.productSku}
+                  name="product"
+                  value={formData.product}
                   onChange={handleChange}
-                  options={mockProducts}
-                  error={!!errors.productSku}
+                  options={products?.map((cat) => ({
+                    value: cat.id.toString(),
+                    label: cat.product_name,
+                  })) ?? []}
                 />
               </FormField>
             </div>
 
-            {selectedProduct && (
-              <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Current Stock</p>
-                    <p className="text-blue-700 mt-1">{selectedProduct.stock} units</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Unit Price</p>
-                    <p className="text-blue-700 mt-1">₹{selectedProduct.price.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Total Value</p>
-                    <p className="text-blue-700 mt-1">
-                      ₹{(selectedProduct.price * (Number(formData.quantity) || 0)).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+
+
+
+            <FormField label="Vendor" required>
+              <Select
+                name="vendor"
+                value={formData.vendor}
+                disabled={!formData.product}
+                onChange={handleChange}
+                options={filteredVendors?.map((cat) => ({
+                  value: cat.vendor.toString(),
+                  label: cat.vendor_detail?.name || "Unknown Vendor",
+                })) ?? []}
+                error={!!errors.vendor}
+              />
+            </FormField>
 
             <FormField label="Return Quantity" required error={errors.quantity}>
               <Input
@@ -163,14 +189,28 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
               />
             </FormField>
 
-            <FormField label="Vendor" required>
-              <Select
-                name="returnType"
-                value={formData.returnType}
-                onChange={handleChange}
-                options={returnTypes}
-              />
-            </FormField>
+            {selectedVendorProduct  && (
+              <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Current Stock</p>
+                    <p className="text-blue-700 mt-1">{stock} units</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Unit Price</p>
+                    <p className="text-blue-700 mt-1">₹{price.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Total Value</p>
+                    <p className="text-blue-700 mt-1">
+                      ₹{(price * (Number(formData.quantity) || 0)).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+
           </div>
         </div>
 
@@ -178,18 +218,18 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
         <div>
           <h4 className="mb-4 pb-2 border-b border-border">Return Details</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <FormField label="Return Reason" required error={errors.reason}>
+            <FormField label="Return Type" required error={errors.returnType}>
               <Select
-                name="reason"
-                value={formData.reason}
+                name="return_type"
+                value={formData.return_type}
                 onChange={handleChange}
-                options={returnReasons}
+                options={returnTypes}
                 error={!!errors.reason}
               />
             </FormField>
 
-            {formData.returnType === 'vendor' && (
-              <FormField label="Original Bill Number" required={formData.returnType === 'vendor'} error={errors.billNumber}>
+            {formData.return_type === '1' && (
+              <FormField label="Original Bill Number" required={formData.return_type === '1'} error={errors.billNumber}>
                 <Input
                   name="billNumber"
                   value={formData.billNumber}
@@ -200,6 +240,7 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
               </FormField>
             )}
 
+            {formData.return_type === '1' && (
             <FormField label="Customer Name">
               <Input
                 name="customerName"
@@ -208,6 +249,7 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
                 placeholder="Enter customer name (if applicable)"
               />
             </FormField>
+            )}
 
             <FormField label="Refund Amount (₹)">
               <Input
@@ -235,13 +277,13 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
         </FormField>
 
         {/* Summary */}
-        {selectedProduct && formData.quantity && (
+        {selectedVendorProduct  && formData.quantity && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <h4 className="text-amber-900 mb-3">Return Summary</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-amber-700">Product:</span>
-                <span className="text-amber-900">{selectedProduct.name}</span>
+                <span className="text-amber-900">{productName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-amber-700">Quantity:</span>
@@ -250,7 +292,7 @@ export function ProductReturnModal({ isOpen, onClose }: ProductReturnModalProps)
               <div className="flex justify-between">
                 <span className="text-amber-700">Return Type:</span>
                 <span className="text-amber-900 capitalize">
-                  {returnTypes.find(t => t.value === formData.returnType)?.label}
+                  {returnTypes.find(t => t.value === formData.return_type)?.label}
                 </span>
               </div>
               {formData.refundAmount && (

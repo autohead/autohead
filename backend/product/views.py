@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import VendorProducts, Products
 from category.models import Category
 from .serializers import (
+    ProductSalesAnalysisSerializer,
     ProductSerializer,
     ProductFormSerializer,
     CategoryBriefSerializer,
@@ -21,7 +22,7 @@ from django.db.models import Sum
 from django.db import models
 from django.db.models.functions import Coalesce
 from vendors.models import Vendors
-
+from bill.models import Bill, BillItem
 
 
 # Create your views here.
@@ -59,14 +60,12 @@ class ProductListCreateView(generics.ListCreateAPIView):
                 0,
             )
         )
-        
+
         page = self.paginate_queryset(queryset)
 
         categories = CategoryBriefSerializer(
             Category.objects.filter(is_active=True), many=True
         ).data
-        
-
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -133,21 +132,21 @@ class ProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 # View for listing products and vendors for dropdowns.
 class DropdownDataList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, *args, **kwargs):
-        
+
         products = ProductBriefSerializer(
             Products.objects.filter(is_active=True), many=True
         ).data
-        
+
         vendor_data = VendorBriefSerializer(
             Vendors.objects.filter(is_active=True), many=True
         ).data
-        
+
         vendor_products = VendorProductBriefSerializer(
             VendorProducts.objects.filter(is_active=True), many=True
         ).data
-        
+
         return custom_response(
             data={
                 "products": products,
@@ -189,12 +188,12 @@ class VendorProductListCreateView(generics.ListCreateAPIView):
         return custom_response(
             data=serializer.data, method="POST", data_name="VendorProduct"
         )
-        
+
+
 class VendorProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
-    queryset = (
-        VendorProducts.objects.filter(is_active=True)
-        .select_related("product", "vendor")
+    queryset = VendorProducts.objects.filter(is_active=True).select_related(
+        "product", "vendor"
     )
     serializer_class = VendorProductFormSerializer
 
@@ -214,3 +213,55 @@ class VendorProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         instance.save(update_fields=["is_active"])
         method = "DEACTIVATE" if instance.is_active else "REACTIVATE"
         return custom_response(data=None, method=method, data_name="VendorProduct")
+
+
+# View for product sales analysis
+from rest_framework.views import APIView
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import F, DecimalField, ExpressionWrapper, Q
+
+
+class ProductSalesAnalysisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+
+        now = timezone.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0)
+        last_2_days = now - timedelta(days=2)
+
+        # for each bill item calculate qty and selling_price
+        revenue_expr = ExpressionWrapper(
+            F("quantity") * F("selling_price"),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+
+        query = BillItem.objects.filter(vendor_product__product_id=pk)
+
+        analytics = query.aggregate(
+            total_sales=Sum("quantity"),
+            total_revenue=Sum(revenue_expr),
+            this_month_sales=Sum(
+                "quantity", filter=Q(bill__created_at__gte=start_of_month)
+            ),
+            last_2day_sales=Sum(
+                "quantity", filter=Q(bill__created_at__gte=last_2_days)
+            ),
+        )
+
+        analysis_data = {
+            "productId": pk,
+            "total_sales": analytics["total_sales"] or 0,
+            "total_revenue": analytics["total_revenue"] or 0.00,
+            "this_month_sales": analytics["this_month_sales"] or 0,
+            "last_2day_sales": analytics["last_2day_sales"] or 0,
+        }
+
+        serializer = ProductSalesAnalysisSerializer(analysis_data)
+
+        return custom_response(
+            data=serializer.data,
+            method="GET",
+            data_name="ProductSalesAnalysis",
+        )

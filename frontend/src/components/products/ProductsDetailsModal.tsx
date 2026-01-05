@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Modal } from '../Modal';
-import { Package, DollarSign, TrendingUp, MapPin, Barcode, User, AlertTriangle } from 'lucide-react';
+import { Package, User, AlertTriangle } from 'lucide-react';
 import type { Product, ProductUpdateValues, Category } from '../../types/product';
 import { useProductData } from '../../hooks/product';
 import { AddEditProductModal } from './AddEditProductModal';
 import { toast } from 'react-toastify';
 import { getUserFriendlyError } from '../../utils/errorHelper';
+import { useGetProductSalesAnalysisQuery } from '../../store/slices/productApiSlice';
+import IsLoadingDisplay from '../common/IsLoadingDisplay';
+import IsErrorDisplay from '../common/IsErrorDisplay';
 
 interface ProductDetailModalProps {
   isOpen: boolean;
@@ -20,13 +23,25 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
 
   const { updateProduct, isUpdating } = useProductData(1);
 
+  const productId = product?.id;
+
+  const {
+    data: analysisData,
+    isLoading: isAnalysisLoading,
+    isError: isAnalysisError,
+  } = useGetProductSalesAnalysisQuery(
+    { id: productId! },
+    { skip: !productId || !isOpen }
+  );
+
   if (!product) return null;
 
-  const sellingPrice = 10;
-  const costPrice = 5;
-  const profit = sellingPrice - costPrice;
-  const profitMargin = ((profit / sellingPrice) * 100).toFixed(1);
+
   const isLowStock = product.stock_count < 20;
+
+  const vendorProduts = product.vendor_products;
+
+
 
 
   const handleUpdateProduct = async (updatedProduct: ProductUpdateValues) => {
@@ -79,7 +94,7 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
           <div className="bg-blue-50 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -92,38 +107,16 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
             </div>
           </div>
 
-          <div className="bg-green-50 rounded-xl p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <DollarSign className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Selling Price</p>
-                <p className="text-green-600">₹{sellingPrice}</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-purple-50 rounded-xl p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Profit Margin</p>
-                <p className="text-purple-600">{profitMargin}%</p>
-              </div>
-            </div>
-          </div>
-
+          {/* Min Stock */}
           <div className="bg-orange-50 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-orange-100 rounded-lg">
                 <User className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Vendor</p>
-                <p className="text-orange-600 text-sm truncate">v</p>
+                <p className="text-sm text-muted-foreground">Min Stock</p>
+                <p className="text-orange-600 text-sm truncate">20 units</p>
               </div>
             </div>
           </div>
@@ -133,81 +126,120 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
         <div className="space-y-4">
           <h4>Product Information</h4>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Cost Price */}
-            <div className="bg-accent/50 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Cost Price</p>
-              <p>₹{costPrice}</p>
+          <div className="hidden lg:block bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor Name</th>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor Code</th>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Cost</th>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Price</th>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Stock</th>
+
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {vendorProduts?.map((v) => (
+                    <tr key={v.id} className="hover:bg-accent/50 transition-colors">
+                      <td className="px-4 py-3.5">{v.vendor_detail?.name}</td>
+                      <td className="px-4 py-3.5 text-sm text-muted-foreground">{v.vendor_code}</td>
+                      <td className="px-4 py-3.5 text-sm text-muted-foreground">₹{v.cost}</td>
+                      <td className="px-4 py-3.5 text-center">₹{v.price}</td>
+                      <td className="px-4 py-3.5 text-center">
+                        <span
+                          className={`${v.stock < 20 ? 'text-amber-600' : 'text-green-600'
+                            }`}
+                        >
+                          {v.stock}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-
-            {/* Profit per Unit */}
-            <div className="bg-accent/50 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Profit per Unit</p>
-              <p className="text-green-600">₹{profit}</p>
-            </div>
-
-            {/* Minimum Stock */}
-
-            <div className="bg-accent/50 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Minimum Stock Level</p>
-              <p>20 units</p>
-            </div>
-
-
-            {/* Barcode */}
-
-            <div className="bg-accent/50 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Barcode className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Barcode</p>
-              </div>
-              <p>BarCode</p>
-            </div>
-
-
-            {/* Storage Location */}
-
-            <div className="bg-accent/50 rounded-lg p-4 md:col-span-2">
-              <div className="flex items-center gap-2 mb-1">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Storage Location</p>
-              </div>
-              <p>Location</p>
-            </div>
-
           </div>
 
-          {/* Description */}
-          {product.description && (
-            <div className="bg-accent/50 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-2">Description</p>
-              <p className="text-sm leading-relaxed">{product.description}</p>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {vendorProduts?.map((v) => (
+              <div
+                key={v.id}
+                className="bg-card rounded-xl p-4 border border-border shadow-sm"
+              >
+                {/* Product Name */}
+                <h3 className="text-center mb-3">{v.vendor_detail?.name}</h3>
+
+                {/* Label-Value Pairs */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Vendor Code</span>
+                    <span>{v.vendor_code}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Cost</span>
+                    <span>₹{v.cost}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Price</span>
+                    <span>₹{v.price}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Stock</span>
+                    <span className={v.stock < 20 ? 'text-amber-600' : 'text-green-600'}>
+                      {v.stock}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {vendorProduts?.length === 0 && (
+            <div className="bg-card rounded-xl p-12 text-center border border-border">
+              <p className="text-muted-foreground">No Details found.</p>
             </div>
           )}
+
+
         </div>
 
-        {/* Sales Analytics */}
-        <div className="pt-5 border-t border-border">
-          <h4 className="mb-4">Sales Analytics</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-accent/50 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Total Sales</p>
-              <p>234</p>
-            </div>
-            <div className="text-center p-4 bg-accent/50 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">This Month</p>
-              <p>42</p>
-            </div>
-            <div className="text-center p-4 bg-accent/50 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Revenue</p>
-              <p>₹{(sellingPrice * 234).toFixed(2)}</p>
-            </div>
-            <div className="text-center p-4 bg-accent/50 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Last Sold</p>
-              <p className="text-sm">2 days ago</p>
+
+        {isAnalysisLoading && (
+          <IsLoadingDisplay />
+        )}
+
+        {isAnalysisError ? (
+          <div className="pt-5 border-t border-border">
+            <IsErrorDisplay type="Sales Analysis" />
+          </div>
+        ) : (
+
+          // Sales Analysis Section
+          <div className="pt-5 border-t border-border">
+            <h4 className="mb-4">Sales Analytics</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-accent/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Total Sales</p>
+                <p>{analysisData?.total_sales}</p>
+              </div>
+              <div className="text-center p-4 bg-accent/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">This Month</p>
+                <p>{analysisData?.this_month_sales}</p>
+              </div>
+              <div className="text-center p-4 bg-accent/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Revenue</p>
+                <p>₹{analysisData?.total_revenue}</p>
+              </div>
+              <div className="text-center p-4 bg-accent/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Last Sold 2 Days</p>
+                <p className="text-sm">{analysisData?.last_2day_sales}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-5 border-t border-border">
@@ -218,12 +250,6 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
             className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
             Edit Product
           </button>
-          {/* <button className="flex-1 px-4 py-2.5 border border-border rounded-lg hover:bg-accent transition-colors">
-            Update Stock
-          </button> */}
-          {/* <button className="flex-1 px-4 py-2.5 border border-destructive text-destructive rounded-lg hover:bg-destructive/10 transition-colors">
-            Delete Product
-          </button> */}
         </div>
       </div>
 
