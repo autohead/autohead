@@ -5,7 +5,6 @@ from bill.models import Bill, BillItem
 from django.shortcuts import get_object_or_404
 
 
-
 # Reusable Mixin
 class StockValidationMixin:
     def validate_stock(self, vendor_product, return_qty):
@@ -17,7 +16,13 @@ class StockValidationMixin:
 
 class VendorProductReturnSerializer(StockValidationMixin, serializers.ModelSerializer):
 
-    return_type = serializers.ChoiceField(choices=[("1", "2")], write_only=True)
+    return_type = serializers.ChoiceField(
+        choices=[
+            ("1", "Vendor"),
+            ("2", "Customer"),
+        ],
+        write_only=True,
+    )
 
     class Meta:
         model = ProductReturn
@@ -29,19 +34,42 @@ class VendorProductReturnSerializer(StockValidationMixin, serializers.ModelSeria
         return attrs
 
     def create(self, validated_data):
+        # remove non-model field
+        validated_data.pop("return_type", None)
+
         with transaction.atomic():
+
             return_qty = validated_data["return_qty"]
             vendor_product = validated_data["vendor_product"]
+
+            # subtract stock
             vendor_product.stock -= return_qty
             vendor_product.save()
+
+            # try to find existing active return
+            existing_return = ProductReturn.objects.filter(
+                vendor_product=vendor_product,
+                status=1,
+            ).first()
+
+            if existing_return:
+                # update instead of creating
+                existing_return.return_qty += return_qty
+                existing_return.save()
+                return existing_return
+
             product_return = ProductReturn.objects.create(**validated_data)
             return product_return
 
 
-class CustomerProductReturnSerializer(StockValidationMixin, serializers.ModelSerializer):
+class CustomerProductReturnSerializer(
+    StockValidationMixin, serializers.ModelSerializer
+):
+
     return_type = serializers.ChoiceField(
         choices=[
-            ("1", "2"),
+            ("1", "Vendor"),
+            ("2", "Customer"),
         ],
         write_only=True,
     )
@@ -60,36 +88,69 @@ class CustomerProductReturnSerializer(StockValidationMixin, serializers.ModelSer
 
     def validate(self, attrs):
         invoice_num = attrs["invoice_num"]
+        vendor_product = attrs["vendor_product"]
 
-        if not Bill.objects.filter(invoice_no=invoice_num).exists():
+        try:
+            bill = Bill.objects.get(invoice_no=invoice_num)
+        except Bill.DoesNotExist:
             raise serializers.ValidationError(
                 {"invoice_num": "Invalid invoice number."}
             )
-            
-        self.validate_stock(attrs["vendor_product"], attrs["return_qty"])
+
+        if not BillItem.objects.filter(
+            bill=bill, vendor_product=vendor_product
+        ).exists():
+            raise serializers.ValidationError(
+                {"vendor_product": "This product is not part of the given invoice."}
+            )
+
+        self.validate_stock(vendor_product, attrs["return_qty"])
+
+        # stash objects for create()
+        attrs["_bill"] = bill
 
         return attrs
 
     def create(self, validated_data):
+        # remove non-model field
+        validated_data.pop("return_type", None)
+
         with transaction.atomic():
             vendor_product = validated_data["vendor_product"]
+            return_qty = validated_data["return_qty"]
 
-            ProductReturn.objects.create(
+            # reduce stock
+            vendor_product.stock -= return_qty
+            vendor_product.save()
+
+            # try to merge into existing active return
+            existing_return = ProductReturn.objects.filter(
                 vendor_product=vendor_product,
-                return_qty=validated_data["return_qty"],
-                reason=validated_data["reason"],
+                status=1,
+            ).first()
+
+            if existing_return:
+                existing_return.return_qty += return_qty
+                existing_return.save()
+                return existing_return
+            
+            # create new ProductReturn
+            product_return = ProductReturn.objects.create(
+                vendor_product=vendor_product,
+                return_qty=return_qty,
+                reason=validated_data.get("reason"),
             )
 
-            bill = get_object_or_404(
-                Bill, invoice_no=validated_data["invoice_num"]
-            )
-            bill_item = get_object_or_404(
-                BillItem, bill=bill, vendor_product=vendor_product
+            bill = validated_data.pop("_bill")
+            # customer-return–specific logic
+            bill_item = BillItem.objects.get(
+                bill=bill,
+                vendor_product=vendor_product,
             )
 
             return CustomerProductReturn.objects.create(
                 **validated_data,
+                product_return=product_return,
                 bill=bill,
                 bill_item=bill_item,
             )
-
