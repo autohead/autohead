@@ -1,34 +1,29 @@
 import { Package, AlertTriangle, Users, DollarSign, FileText, TrendingUp, TrendingDown } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useState } from 'react';
+import { useDashboardData } from '../hooks/dashboard';
+import IsLoadingDisplay from '../components/common/IsLoadingDisplay';
+import IsErrorDisplay from '../components/common/IsErrorDisplay';
 
 
-const salesData = [
-    { month: 'Jan', sales: 12000 },
-    { month: 'Feb', sales: 19000 },
-    { month: 'Mar', sales: 15000 },
-    { month: 'Apr', sales: 22000 },
-    { month: 'May', sales: 28000 },
-    { month: 'Jun', sales: 24000 },
-    { month: 'Jul', sales: 31000 },
-    { month: 'Aug', sales: 35000 },
-    { month: 'Sep', sales: 29000 },
-    { month: 'Oct', sales: 38000 },
-    { month: 'Nov', sales: 42000 },
-    { month: 'Dec', sales: 45000 },
-];
-
-const stockAlerts = [
-    { id: 1, product: 'Premium Floor Mats', sku: 'ACC-001', currentStock: 5, minStock: 20 },
-    { id: 2, product: 'LED Headlight Kit', sku: 'ACC-045', currentStock: 3, minStock: 15 },
-    { id: 3, product: 'Car Cover Waterproof', sku: 'ACC-089', currentStock: 8, minStock: 25 },
-    { id: 4, product: 'Phone Mount Magnetic', sku: 'ACC-112', currentStock: 12, minStock: 30 },
-    { id: 5, product: 'Dash Camera HD', sku: 'ACC-156', currentStock: 6, minStock: 20 },
-];
+const monthMap = {
+    January: 'Jan',
+    February: 'Feb',
+    March: 'Mar',
+    April: 'Apr',
+    May: 'May',
+    June: 'Jun',
+    July: 'Jul',
+    August: 'Aug',
+    September: 'Sep',
+    October: 'Oct',
+    November: 'Nov',
+    December: 'Dec',
+};
 
 
 const recentActivities = [
-    { id: 1, type: 'sale', message: 'Bill #1234 generated - ₹5,420', time: '5 mins ago' },
+    { id: 1, type: 'sale', message: 'Bill #1234 generated - ₹0000', time: '5 mins ago' },
     { id: 2, type: 'product', message: 'New product added: Car Perfume Set', time: '23 mins ago' },
     { id: 3, type: 'stock', message: 'Stock updated for Premium Floor Mats', time: '1 hour ago' },
     { id: 4, type: 'vendor', message: 'New vendor registered: AutoParts Pro', time: '2 hours ago' },
@@ -41,10 +36,16 @@ export default function DashboardPage() {
     const [alertsExpanded, setAlertsExpanded] = useState(true);
     const [activityExpanded, setActivityExpanded] = useState(true);
 
+    const { data: dashboardData, isLoading, isError } = useDashboardData();
+
+    if (isLoading) return <IsLoadingDisplay />;
+
+    if (isError) return <IsErrorDisplay type='dashboard' />;
+
     const kpis = [
         {
             title: 'Total Products',
-            value: '1,248',
+            value: dashboardData?.total_products,
             change: '+12%',
             trend: 'up',
             icon: Package,
@@ -53,7 +54,7 @@ export default function DashboardPage() {
         },
         {
             title: 'Low Stock Items',
-            value: '23',
+            value: dashboardData?.low_stock,
             change: '+5',
             trend: 'up',
             icon: AlertTriangle,
@@ -62,7 +63,7 @@ export default function DashboardPage() {
         },
         {
             title: 'Total Vendors',
-            value: '87',
+            value: dashboardData?.total_vendors,
             change: '+3',
             trend: 'up',
             icon: Users,
@@ -71,7 +72,7 @@ export default function DashboardPage() {
         },
         {
             title: "Today's Sales",
-            value: '₹45,230',
+            value: dashboardData?.total_sales_today,
             change: '+18%',
             trend: 'up',
             icon: DollarSign,
@@ -80,7 +81,7 @@ export default function DashboardPage() {
         },
         {
             title: 'Total Bills Generated',
-            value: '342',
+            value: dashboardData?.total_bills,
             change: '+24',
             trend: 'up',
             icon: FileText,
@@ -89,7 +90,7 @@ export default function DashboardPage() {
         },
         {
             title: 'Monthly Revenue',
-            value: '₹8.2L',
+            value: '₹' + dashboardData?.monthly_revenue,
             change: '+22%',
             trend: 'up',
             icon: TrendingUp,
@@ -97,6 +98,15 @@ export default function DashboardPage() {
             bgColor: 'bg-cyan-50',
         },
     ];
+
+    const salesData = dashboardData?.monthly_sales.map(item => ({
+        month: monthMap[item.month as keyof typeof monthMap],
+        sales: item.total_sales
+    }));
+
+
+    const stockAlerts = dashboardData?.low_stock_products || [];
+
 
 
     return (
@@ -182,16 +192,23 @@ export default function DashboardPage() {
                     </div>
                     <div className={`${alertsExpanded ? 'block' : 'hidden'} lg:block`}>
                         <div className="divide-y divide-border">
-                            {stockAlerts.map((alert) => (
-                                <div key={alert.id} className="p-4 hover:bg-accent/50 transition-colors">
+                            {
+                                stockAlerts.length === 0 && (
+                                    <div className="p-4">
+                                        <p className="text-sm text-muted-foreground text-center">No Low stock  found.</p>
+                                    </div>
+                                )
+                            }
+                            {stockAlerts.map((alert, index) => (
+                                <div key={index} className="p-4 hover:bg-accent/50 transition-colors">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm truncate">{alert.product}</p>
-                                            <p className="text-sm text-muted-foreground mt-1">SKU: {alert.sku}</p>
+                                            <p className="text-sm truncate">{alert.product__product_name}</p>
+                                            <p className="text-sm text-muted-foreground mt-1">SKU: {alert.vendor__name}</p>
                                         </div>
                                         <div className="text-right flex-shrink-0">
-                                            <p className="text-sm text-amber-600">{alert.currentStock} units</p>
-                                            <p className="text-xs text-muted-foreground mt-1">Min: {alert.minStock}</p>
+                                            <p className="text-sm text-amber-600">{alert.stock} units</p>
+                                            <p className="text-xs text-muted-foreground mt-1">Min: 5</p>
                                         </div>
                                     </div>
                                 </div>

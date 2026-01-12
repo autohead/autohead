@@ -25,10 +25,10 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onToggle, onQuickActi
 
     const mainNavItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'categories', label: 'Categories', icon: LayoutGrid },
         { id: 'products', label: 'Products', icon: Package },
         { id: 'vendors', label: 'Vendors', icon: Users },
         { id: 'billing', label: 'Billing', icon: FileText },
-        { id: 'categories', label: 'Categories', icon: LayoutGrid },
     ];
 
 

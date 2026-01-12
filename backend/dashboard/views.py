@@ -65,12 +65,17 @@ class DashboardView(APIView):
             .order_by("month")
         )
         
+        sales_by_month = {
+            row["month"]: row["total_sales"] or 0
+            for row in monthly_sales
+        }
+
         result = []
 
-        for row in monthly_sales:
+        for month in range(1, 13):
             result.append({
-                "month": calendar.month_name[row['month']],
-                "total_sales": row['total_sales'] or 0
+                "month": calendar.month_name[month],  # Full month name
+                "total_sales": sales_by_month.get(month, 0)
             })
 
         dashBoardData = {

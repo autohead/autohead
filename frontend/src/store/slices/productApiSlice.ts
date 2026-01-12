@@ -76,3 +76,44 @@ export const {
 
 
 
+// services/baseApi.ts
+// import { createApi } from '@reduxjs/toolkit/query/react';
+
+// export const baseApi = createApi({
+//   reducerPath: 'api',
+//   baseQuery: baseQueryWithAuthCheck,
+//   tagTypes: ['Category', 'Product'],
+//   endpoints: () => ({}),
+// });
+
+
+// services/categoryApi.ts
+// import { baseApi } from './baseApi';
+
+// export const categoryApi = baseApi.injectEndpoints({
+//   endpoints: (builder) => ({
+//     getCategories: builder.query<CategoryResponse[], void>({
+//       query: () => ({
+//         url: '/categories/',
+//         method: HttpMethod.GET,
+//       }),
+//       transformResponse: (res: CategoryListResponse) => res.data,
+//       providesTags: ['Category'],
+//     }),
+
+//     createCategory: builder.mutation<any, CreateCategoryPayload>({
+//       query: (body) => ({
+//         url: '/categories/',
+//         method: HttpMethod.POST,
+//         body,
+//       }),
+//       invalidatesTags: ['Category'], // 🎯 auto refetch
+//     }),
+//   }),
+// });
+
+// export const {
+//   useGetCategoriesQuery,
+//   useCreateCategoryMutation,
+// } = categoryApi;
+
