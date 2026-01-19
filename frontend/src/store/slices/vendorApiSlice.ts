@@ -1,13 +1,10 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
+import { baseApi } from "./baseApiSlice";
 import { HttpMethod } from "../../constants";
 import type { VendorResponse, VendorListResponse, VendorFormData, VendorUpdateData,VendorPaginatedResponse  } from "../../types/vendor";
 
 
-export const vendorApiSlice = createApi({
-    reducerPath: "vendorApi",
-    baseQuery: baseQueryWithAuthCheck,
-    tagTypes: ["Vendor"],
+export const vendorApiSlice = baseApi.injectEndpoints({
+    
     endpoints: (builder) => ({
         // Get all vendors
         getVendors: builder.query<VendorPaginatedResponse, {page?: number}>({
@@ -26,7 +23,7 @@ export const vendorApiSlice = createApi({
                 method: HttpMethod.POST,
                 body: vendor,
             }),
-            invalidatesTags: ["Vendor"],
+            invalidatesTags: ["Vendor", "DropDown"],
         }),
 
         // Update vendor

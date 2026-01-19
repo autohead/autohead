@@ -1,12 +1,9 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
 import { HttpMethod } from "../../constants";
 import type { BillFormValues, BillingApiResponse, BillListData } from "../../types/billing";
+import { baseApi } from "./baseApiSlice";
 
-export const billingApiSlice = createApi({
-    reducerPath: "billingApi",
-    baseQuery: baseQueryWithAuthCheck,
-    tagTypes: ["Billing"],
+export const billingApiSlice = baseApi.injectEndpoints({
+    
     endpoints: (builder) => ({
 
         getBills: builder.query<BillListData[], void>({
@@ -24,7 +21,7 @@ export const billingApiSlice = createApi({
                 method: HttpMethod.POST,
                 body: bill,
             }),
-            invalidatesTags : ["Billing"],
+            invalidatesTags : ["Billing", "DropDown", "Dashboard"],
         }), 
 
     })

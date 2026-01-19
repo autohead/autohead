@@ -1,13 +1,11 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
+import { baseApi } from "./baseApiSlice";
+
 import { HttpMethod } from "../../constants";
 import type { ProductListApiResponse, ProductListData, Product, ProductAnalysisApiResponse  } from "../../types/product";
 
 
-export const productApiSlice = createApi({
-    reducerPath: "productApi",
-    baseQuery: baseQueryWithAuthCheck,
-    tagTypes: ["Product"],
+export const productApiSlice = baseApi.injectEndpoints({
+  
     endpoints: (builder) => ({
         // Get all products
         getProducts: builder.query<ProductListData, { page?: number }>({
@@ -74,46 +72,4 @@ export const {
     useGetProductSalesAnalysisQuery
 } = productApiSlice
 
-
-
-// services/baseApi.ts
-// import { createApi } from '@reduxjs/toolkit/query/react';
-
-// export const baseApi = createApi({
-//   reducerPath: 'api',
-//   baseQuery: baseQueryWithAuthCheck,
-//   tagTypes: ['Category', 'Product'],
-//   endpoints: () => ({}),
-// });
-
-
-// services/categoryApi.ts
-// import { baseApi } from './baseApi';
-
-// export const categoryApi = baseApi.injectEndpoints({
-//   endpoints: (builder) => ({
-//     getCategories: builder.query<CategoryResponse[], void>({
-//       query: () => ({
-//         url: '/categories/',
-//         method: HttpMethod.GET,
-//       }),
-//       transformResponse: (res: CategoryListResponse) => res.data,
-//       providesTags: ['Category'],
-//     }),
-
-//     createCategory: builder.mutation<any, CreateCategoryPayload>({
-//       query: (body) => ({
-//         url: '/categories/',
-//         method: HttpMethod.POST,
-//         body,
-//       }),
-//       invalidatesTags: ['Category'], // 🎯 auto refetch
-//     }),
-//   }),
-// });
-
-// export const {
-//   useGetCategoriesQuery,
-//   useCreateCategoryMutation,
-// } = categoryApi;
 

@@ -1,12 +1,9 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
+import { baseApi } from "./baseApiSlice";
 import { HttpMethod } from "../../constants";
 import type { DropDownListApiResponse, DropDownListData } from "../../types/dropDown";
 
-export const dropDownApiSlice = createApi({
-    reducerPath: "dropDownApi",
-    baseQuery: baseQueryWithAuthCheck,
-    tagTypes: ["DropDown"],
+export const dropDownApiSlice = baseApi.injectEndpoints({
+   
     endpoints: (builder) => ({
         // Get dropdown data for vendors and products
         getDropDownListData: builder.query<DropDownListData, void>({

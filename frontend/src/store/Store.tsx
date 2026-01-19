@@ -1,23 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { authApiSlice } from "./slices/authApiSlice";
-import { categoryApiSlice } from "./slices/categoryApiSlice";
-import { vendorApiSlice } from "./slices/vendorApiSlice";
-import { productApiSlice } from "./slices/productApiSlice";
-import { dropDownApiSlice } from "./slices/dropDownApiSlice";
-import { vendorProductApiSlice } from "./slices/vendorProductsApiSlice";
-import { billingApiSlice } from "./slices/billingApiSlice";
-import { dashboardApiSlice } from "./slices/dashboardApiSlice";
+import { baseApi } from "./slices/baseApiSlice";
 
 export const store = configureStore({
     reducer: {
         [authApiSlice.reducerPath]: authApiSlice.reducer,
-        [categoryApiSlice.reducerPath]: categoryApiSlice.reducer,
-        [vendorApiSlice.reducerPath]: vendorApiSlice.reducer,
-        [productApiSlice.reducerPath]: productApiSlice.reducer,
-        [dropDownApiSlice.reducerPath]: dropDownApiSlice.reducer,
-        [vendorProductApiSlice.reducerPath]: vendorProductApiSlice.reducer,
-        [billingApiSlice.reducerPath]:billingApiSlice.reducer,
-        [dashboardApiSlice.reducerPath]:dashboardApiSlice.reducer
+        [baseApi.reducerPath]: baseApi.reducer,
 
     },
     /**
@@ -32,13 +20,7 @@ export const store = configureStore({
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware()
             .concat(authApiSlice.middleware)
-            .concat(categoryApiSlice.middleware)
-            .concat(vendorApiSlice.middleware)
-            .concat(productApiSlice.middleware)
-            .concat(dropDownApiSlice.middleware)
-            .concat(vendorProductApiSlice.middleware)
-            .concat(billingApiSlice.middleware)
-            .concat(dashboardApiSlice.middleware),
+            .concat(baseApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

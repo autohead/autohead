@@ -1,12 +1,8 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
+import { baseApi } from "./baseApiSlice";
 import { HttpMethod } from "../../constants";
 import type { DashboardApiResponse, DashboardData } from "../../types/dashboard";
 
-export const dashboardApiSlice = createApi({
-    reducerPath: "dashboardApi",
-    baseQuery: baseQueryWithAuthCheck,
-    tagTypes: ["Dashboard"],
+export const dashboardApiSlice = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         getDashboardData: builder.query<DashboardData, void>({
             query: () => ({

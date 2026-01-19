@@ -1,13 +1,10 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
 import { HttpMethod } from "../../constants";
+import { baseApi } from "./baseApiSlice";
 import type { CategoryResponse, CategoryListResponse, CategoryFormData, CategoryUpdateData } from "../../types/category";
 
 
-export const categoryApiSlice = createApi({
-    reducerPath: "categoryApi",
-    baseQuery: baseQueryWithAuthCheck,
-    tagTypes: ["Category"],
+export const categoryApiSlice = baseApi.injectEndpoints({
+    
     endpoints: (builder) => ({
         // Get all categories
         getCategories: builder.query<CategoryResponse[], void>({

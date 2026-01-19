@@ -1,15 +1,10 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import baseQueryWithAuthCheck from "../baseQueryWithAuthCheck";
+import { baseApi } from "./baseApiSlice";
 import { HttpMethod } from "../../constants";
 import type{ VendorProductFormValues, VendorProduct, VendorProductUpdateValues } from "../../types/vendorProduct";
 
 
 
-export const vendorProductApiSlice = createApi({
-    reducerPath: "vendorProductApi",
-    baseQuery: baseQueryWithAuthCheck,
-    tagTypes: ["vendorProduct"],
-
+export const vendorProductApiSlice = baseApi.injectEndpoints({
     endpoints: (builder) => ({
 
         // Create VendorProduct
@@ -19,6 +14,8 @@ export const vendorProductApiSlice = createApi({
                 method: HttpMethod.POST,
                 body: vendorProduct,
             }),
+
+            invalidatesTags: ["Vendor"],
         }),
 
         updateVendorProductStock: builder.mutation<void,VendorProductUpdateValues>({

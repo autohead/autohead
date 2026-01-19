@@ -16,22 +16,12 @@ interface CartItem {
 }
 
 
-
-
-const billHistor = [
-    { id: '#1234', date: '2024-12-10', customer: 'John Doe', amount: 5420, items: 3 },
-    { id: '#1233', date: '2024-12-10', customer: 'Sarah Smith', amount: 3890, items: 2 },
-    { id: '#1232', date: '2024-12-09', customer: 'Mike Johnson', amount: 12300, items: 5 },
-    { id: '#1231', date: '2024-12-09', customer: 'Emily Davis', amount: 2100, items: 1 },
-    { id: '#1230', date: '2024-12-08', customer: 'Robert Brown', amount: 8750, items: 4 },
-];
-
 export default function BillingPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [cart, setCart] = useState<CartItem[]>([]);
     const [discount, setDiscount] = useState(0);
     const [customerName, setCustomerName] = useState('');
-    const { data, isLoading, refetch } = useDropDownData();
+    const { data, isLoading,  } = useDropDownData();
     const {
         data: billData, isLoading: billDataLoading, isError: billDataError,
         isCreating, createBill
@@ -142,7 +132,6 @@ export default function BillingPage() {
             };
 
             await createBill(payload).unwrap();
-            refetch();
 
             toast.success('Bill generated successfully', { autoClose: 2000 });
             setCart([]);

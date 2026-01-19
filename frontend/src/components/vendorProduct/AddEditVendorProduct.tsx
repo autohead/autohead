@@ -7,7 +7,6 @@ import type { DropDownListData } from '../../types/dropDown';
 import { useDropDownData } from '../../hooks/dropDown';
 import { useVendorProductData } from '../../hooks/vendorProduct';
 import { toast } from 'react-toastify';
-import { Loader } from 'lucide-react';
 import { getUserFriendlyError } from '../../utils/errorHelper'
 
 
@@ -22,7 +21,7 @@ interface AddEditVendorProductModalProps {
 }
 
 
-export function AddEditVendorProduct({ isOpen, onClose, onSave, isSaving, mode, vendorProduct }: AddEditVendorProductModalProps) {
+export function AddEditVendorProduct({ isOpen, onClose, mode, vendorProduct }: AddEditVendorProductModalProps) {
 
     const { data, isLoading } = useDropDownData();
     const { createVendorProductData, isCreating } = useVendorProductData()
