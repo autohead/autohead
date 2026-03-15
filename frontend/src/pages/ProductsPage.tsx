@@ -7,7 +7,6 @@ import type { Product, ProductFormValues } from '../types/product';
 import Pagination from '../components/common/Pagination';
 import IsLoadingDisplay from '../components/common/IsLoadingDisplay';
 import IsErrorDisplay from '../components/common/IsErrorDisplay';
-import ImagePreviewDialoge from '../components/common/ImagePreviewDialoge';
 import { toast } from 'react-toastify';
 import { getUserFriendlyError } from '../utils/errorHelper';
 import WarningDialoge from '../components/common/WarningDialoge';
@@ -19,12 +18,9 @@ import Loader from '../components/Loader';
 
 export default function ProductsPage() {
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
-    const [showImageModal, setShowImageModal] = useState(false);
-    const [selectedImage, setSelectedImage] = useState<any>('');
     const [page, setPage] = useState(1);
     const [showConfirm, setShowConfirm] = useState(false);
 
@@ -37,7 +33,6 @@ export default function ProductsPage() {
 
 
     const products = data?.products.results ?? [];
-    const all_categories = data?.categories ?? [];
     const total_pages = data?.products.total_pages ?? 0;
     const current_page = data?.products.current_page ?? 0;
 
@@ -48,31 +43,14 @@ export default function ProductsPage() {
     const filteredProducts = products.filter((product) => {
         const matchesSearch =
             product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.vendor_products?.some(vp =>
-                vp.vendor_code.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        const matchesCategory = selectedCategory === 'all' || product.category_detail?.name === selectedCategory;
-        return matchesSearch && matchesCategory;
+            product.product_code.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesSearch;
     });
 
-    const categories = ['all', ...Array.from(new Set(all_categories.map((p) => p.name)))];
 
     const handleAddProduct = async (productData: ProductFormValues) => {
         try {
-            const formDataToSend = new FormData();
-
-            formDataToSend.append('product_name', productData.product_name);
-            formDataToSend.append('product_code', productData.product_code);
-            formDataToSend.append('category', String(productData.category));
-            formDataToSend.append('description', productData.description ?? '');
-
-            if (productData.image) {
-                formDataToSend.append('image', productData.image);
-            }
-
-            // console.log(productData.image);
-
-            await createProduct(formDataToSend).unwrap();
+            await createProduct(productData).unwrap();
             toast.success('Product added successfully', { autoClose: 2000 });
         } catch (err: any) {
             const errorMessage = getUserFriendlyError(err, 'Failed to add product. Please try again.');
@@ -126,17 +104,6 @@ export default function ProductsPage() {
                         />
                     </div>
                     <div className="flex gap-2">
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="px-4 py-2.5 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        >
-                            {categories.map((cat) => (
-                                <option key={cat} value={cat}>
-                                    {cat === 'all' ? 'All Categories' : cat}
-                                </option>
-                            ))}
-                        </select>
                         <button
                             onClick={() => setShowAddModal(true)}
                             className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 whitespace-nowrap"
@@ -155,12 +122,7 @@ export default function ProductsPage() {
                                 <tr>
                                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Product Name</th>
                                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Product Code</th>
-                                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Category</th>
-                                    {/* <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor</th> */}
                                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Stock Qty</th>
-                                    {/* <th className="px-4 py-3 text-left text-sm text-muted-foreground">Cost Price</th>
-                                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Selling Price</th> */}
-                                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Image</th>
                                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Actions</th>
                                 </tr>
                             </thead>
@@ -173,39 +135,18 @@ export default function ProductsPage() {
                                                 product.product_code
                                             }
                                         </td>
-                                        <td className="px-4 py-3.5">
-                                            <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm">
-                                                {product.category_detail?.name}
-                                            </span>
-                                        </td>
+
 
                                         <td className="px-4 py-3.5">
                                             <span
 
-                                                className={product.stock_count < 20 ? 'text-amber-600' : 'text-green-600'}
+                                                className={product.stock < 20 ? 'text-amber-600' : 'text-green-600'}
                                             >
-                                                {product.stock_count} Nos
+                                                {product.stock} Nos
                                             </span>
                                         </td>
 
-                                        <td className="px-4 py-3.5">
-                                            {product.image ? (
-                                                <img
-                                                    src={product.image_url}
-                                                    alt={product.product_name}
-                                                    className={`w-12 h-12 object-cover rounded-lg ${product.image ? 'cursor-pointer' : ''}`}
-                                                    onClick={
-                                                        () => {
-                                                            setSelectedImage(product.image_url);
-                                                            setShowImageModal(true);
-                                                            setSelectedProduct(product);
-                                                        }
-                                                    }
-                                                />
-                                            ) : (
-                                                <span className="text-muted-foreground">No Image</span>
-                                            )}
-                                        </td>
+
                                         <td className="px-4 py-3.5">
                                             <div className="flex items-center gap-2">
                                                 <button
@@ -258,22 +199,15 @@ export default function ProductsPage() {
 
                                         <p
 
-                                            className={`mt-0.5 ${product.stock_count < 20 ? 'text-amber-600' : 'text-green-600'
+                                            className={`mt-0.5 ${product.stock < 20 ? 'text-amber-600' : 'text-green-600'
                                                 }`}
                                         >
-                                            {product.stock_count} units
+                                            {product.stock} units
                                         </p>
 
 
                                     </div>
-                                    <div>
-                                        <span className="text-muted-foreground">Category:</span>
-                                        <p className="mt-0.5">
-                                            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">
-                                                {product.category_detail?.name}
-                                            </span>
-                                        </p>
-                                    </div>
+
                                 </div>
                                 <div className="flex gap-2 pt-2">
                                     <button
@@ -324,7 +258,6 @@ export default function ProductsPage() {
                 isOpen={showAddModal}
                 onClose={() => setShowAddModal(false)}
                 onSave={handleAddProduct}
-                categories={all_categories}
                 mode="add"
                 isSaving={isCreating}
             />
@@ -333,15 +266,8 @@ export default function ProductsPage() {
                 isOpen={showDetailModal}
                 onClose={() => setShowDetailModal(false)}
                 product={selectedProduct}
-                categories={all_categories}
             />
 
-            <ImagePreviewDialoge
-                isOpen={showImageModal}
-                onCancel={() => setShowImageModal(false)}
-                image={selectedImage}
-                product={selectedProduct}
-            />
 
             {/* confirm Modal */}
             <WarningDialoge

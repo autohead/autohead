@@ -1,7 +1,7 @@
 import { baseApi } from "./baseApiSlice";
 
 import { HttpMethod } from "../../constants";
-import type { ProductListApiResponse, ProductListData, Product, ProductAnalysisApiResponse  } from "../../types/product";
+import type { ProductListApiResponse, ProductListData, Product, ProductAnalysisApiResponse, ProductFormValues  } from "../../types/product";
 
 
 export const productApiSlice = baseApi.injectEndpoints({
@@ -17,10 +17,8 @@ export const productApiSlice = baseApi.injectEndpoints({
             providesTags: ["Product"],
         }),
 
-        // create Product
-        // Switched from ProductFormValues to FormData since this API call includes an image upload.
-        // Plain objects cannot handle files; FormData is needed for multipart/form-data.
-        createProduct: builder.mutation<Product, FormData>({
+       
+        createProduct: builder.mutation<Product, ProductFormValues>({
             query: (product) => ({
                 url: "/products/",
                 method: HttpMethod.POST,

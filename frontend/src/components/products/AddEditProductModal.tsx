@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '../Modal';
-import { FormField, Input, TextArea, Select, ImageInput } from '../FormField';
-import { Save, X } from 'lucide-react';
-import type { Product, Category, } from '../../types/product';
+import { FormField, Input } from '../FormField';
+import { Save, X, Trash } from 'lucide-react';
+import type { Product, ProductFormValues } from '../../types/product';
+import { toast } from 'react-toastify';
 
 
 interface AddEditProductModalProps {
@@ -12,35 +13,76 @@ interface AddEditProductModalProps {
   onSave: (product: any) => void;
   isSaving: boolean
   products?: Product | null;
-  categories?: Category[];
 }
 
 
 
-
-
-
-export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, isSaving, categories }: AddEditProductModalProps) {
+export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, isSaving }: AddEditProductModalProps) {
   const [formData, setFormData] = useState({
-    product_name: '',
-    product_code: '',
-    category: '',
-    description: '',
+    vendor_name: '',
+    vendor_contact: '',
   });
 
+  const [rows, setRows] = useState([
+    {
+      product_name: '',
+      product_code: '',
+      stock: "",
+      cost: "",
+      price: "",
+    }
+  ])
+
+  // Initialize form data when editing an existing product
   useEffect(() => {
     if (products) {
       setFormData({
-        product_name: products.product_name ?? '',
-        product_code: products.product_code ?? '',
-        category: String(products.category_detail?.id ?? ""),
-        description: products.description ?? '',
+        vendor_name: "",
+        vendor_contact: ""
       });
+
+      setRows([
+        {
+          product_name: products.product_name ?? "",
+          product_code: products.product_code ?? "",
+          stock: String(products.stock ?? ""),
+          cost: String(products.cost ?? ""),
+          price: String(products.price ?? "")
+        }
+      ]);
     }
   }, [products]);
 
+  // Add new row on Enter key press
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
 
-  const [image, setImage] = useState(products?.image_url || '');
+      // prevent adding new rows if all fields are not filled
+      const currentRow = rows[index];
+      if (!currentRow.product_name || !currentRow.product_code || !currentRow.stock || !currentRow.cost || !currentRow.price) {
+        toast.error("Please fill all fields before adding a new row.");
+        return;
+      }
+
+      setRows([
+        ...rows,
+        {
+          product_name: "",
+          product_code: "",
+          stock: "",
+          cost: "",
+          price: ""
+        }
+      ]);
+    }
+  }
+
+  // Remove row
+  const removeRow = (index: number) => {
+    if (rows.length === 1) return; // Prevent removing the last row
+    setRows(rows.filter((_, i) => i !== index));
+  };
 
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,19 +99,49 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
     }
   };
 
+  // Handle change for dynamic rows
+  const handleRowChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const { name, value } = e.target;
+
+    const updatedRows = [...rows];
+    updatedRows[index] = {
+      ...updatedRows[index],
+      [name]: value
+    };
+
+    setRows(updatedRows);
+  };
+
 
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.product_name.trim())
-      newErrors.product_name = 'Product name is required';
+    if (!formData.vendor_name.trim())
+      newErrors.vendor_name = 'Vendor name is required';
 
-    if (!formData.product_code.trim())
-      newErrors.product_code = 'Product code is required';
+    if (!formData.vendor_contact.trim() || formData.vendor_contact.trim().length < 10)
+      newErrors.vendor_contact = 'Valid contact number is required';
 
-    if (!formData.category)
-      newErrors.category = 'Category is required';
+    rows.forEach((row, index) => {
+      if (!row.product_name.trim())
+        newErrors[`product_name_${index}`] = "Product name is required";
+
+      if (!row.product_code.trim())
+        newErrors[`product_code_${index}`] = "Product code is required";
+
+      if (!row.stock)
+        newErrors[`stock_${index}`] = "Stock is required";
+
+      if (!row.cost)
+        newErrors[`cost_${index}`] = "Cost is required";
+
+      if (!row.price)
+        newErrors[`price_${index}`] = "Price is required";
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -77,11 +149,28 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
 
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
 
     if (validateForm()) {
+      const payload: ProductFormValues = {
+        vendor_data: formData.vendor_name
+          ? {
+            name: formData.vendor_name,
+            phone: formData.vendor_contact
+          }
+          : undefined,
+
+        product_data: rows.map((row) => ({
+          product_name: row.product_name,
+          product_code: row.product_code,
+          stock: row.stock,
+          cost: row.cost,
+          price: row.price
+        }))
+      };
       try {
-        await onSave(formData);
+        await onSave(payload);
         handleClose();
       } catch (error) {
         console.error('Error saving product:', error);
@@ -94,83 +183,146 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
 
   const handleClose = () => {
     setFormData({
-      product_name: '',
-      product_code: '',
-      category: '',
-      description: '',
+      vendor_name: '',
+      vendor_contact: '',
     });
-    setImage('');
+    setRows([
+      {
+        product_name: '',
+        product_code: '',
+        stock: "",
+        cost: "",
+        price: "",
+      }
+    ]);
     setErrors({});
     onClose();
   };
 
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={mode === 'add' ? 'Add Product' : 'Edit Product'} size="lg">
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Product Name */}
-          <FormField label="Product Name" required error={errors.product_name}>
+    <Modal isOpen={isOpen} onClose={handleClose} title={mode === 'add' ? 'Add Product' : 'Edit Product'} size="xl">
+      <form onSubmit={handleSubmit} className="space-y-5 ">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-b border-border pb-5">
+
+          {/* Vendor Name */}
+          <FormField label="Vendor Name" required error={errors.vendor_name}>
             <Input
-              name="product_name"
-              value={formData.product_name}
+              name="vendor_name"
+              value={formData.vendor_name}
               onChange={handleChange}
-              placeholder="e.g., Premium Floor Mats"
-              error={!!errors.name}
+              placeholder="axo automotive"
+              error={!!errors.vendor_name}
             />
           </FormField>
 
-          {/* SKU */}
-          <FormField label="Product Code" required error={errors.product_code}>
+
+          {/* Vendor Contacts */}
+          <FormField label="Contact Number" required error={errors.vendor_contact}>
             <Input
-              name="product_code"
-              value={formData.product_code}
+              name="vendor_contact"
+              value={formData.vendor_contact}
               onChange={handleChange}
-              placeholder="e.g., ACC-001"
-              error={!!errors.product_code}
-            />
-          </FormField>
-
-          {/* Category */}
-          <FormField label="Category" required error={errors.category}>
-            <Select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              options={categories?.map((cat) => ({
-                value: cat.id.toString(),
-                label: cat.name,
-              })) ?? []}
-              error={!!errors.category}
-            />
-          </FormField>
-
-          <FormField label="Product Image" required >
-            <ImageInput
-              value={image}
-              onChange={(url, file) => {
-                setImage(url ?? '');
-
-                setFormData((prev) => ({
-                  ...prev,
-                  image: file ?? null,
-                }));
-              }}
+              placeholder="+91 1234567890"
+              error={!!errors.vendor_contact}
             />
           </FormField>
 
         </div>
 
-        {/* Description */}
-        <FormField label="Description">
-          <TextArea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Enter product description..."
-            rows={4}
-          />
-        </FormField>
+
+        {/* Heading Table */}
+        <div className="hidden lg:block bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm text-muted-foreground">Product Name</th>
+                  <th className="px-4 py-3 text-left text-sm text-muted-foreground">Product Code</th>
+                  <th className="px-4 py-3 text-left text-sm text-muted-foreground">Stock Qty</th>
+                  <th className="px-4 py-3 text-left text-sm text-muted-foreground">Cost</th>
+                  <th className="px-4 py-3 text-left text-sm text-muted-foreground">Selling Price</th>
+                  <th className="px-4 py-3 text-left text-sm text-muted-foreground">Action</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+        </div>
+
+        {rows.map((formData, index) => (
+          <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-5 pb-2">
+            {/* Product Name */}
+            <FormField label="Product Name" compact required error={errors[`product_name_${index}`]}>
+              <Input
+                name="product_name"
+                value={formData.product_name}
+                onChange={(e) => handleRowChange(e, index)}
+                placeholder="e.g., Premium Floor Mats"
+                error={!!errors[`product_name_${index}`]}
+              />
+            </FormField>
+
+            {/* Product Code */}
+            <FormField label="Product Code" compact required error={errors[`product_code_${index}`]}>
+              <Input
+                name="product_code"
+                value={formData.product_code}
+                onChange={(e) => handleRowChange(e, index)}
+                placeholder="e.g., ACC-001"
+                error={!!errors[`product_code_${index}`]}
+              />
+            </FormField>
+
+            {/* Stock Qty */}
+            <FormField label="Stock Qty" compact required error={errors[`stock_${index}`]}>
+              <Input
+                name="stock"
+                type="number"
+                value={formData.stock}
+                onChange={(e) => handleRowChange(e, index)}
+                placeholder="50 NOS"
+                error={!!errors[`stock_${index}`]}
+              />
+            </FormField>
+
+            {/* Cost */}
+            <FormField label="Cost" compact required error={errors[`cost_${index}`]}>
+              <Input
+                name="cost"
+                type="number"
+                value={formData.cost}
+                onChange={(e) => handleRowChange(e, index)}
+                placeholder="500.00"
+                error={!!errors[`cost_${index}`]}
+              />
+            </FormField>
+
+            {/* Selling Price */}
+            <FormField label="Selling Price" compact required error={errors[`price_${index}`]}>
+              <Input
+                name="price"
+                type="number"
+                value={formData.price}
+                onChange={(e) => handleRowChange(e, index)}
+                placeholder="500.00"
+                error={!!errors[`price_${index}`]}
+                onKeyDown={(e) => handleKeyDown(e, index)}
+              />
+            </FormField>
+
+
+            {/* Action Buttons */}
+            <button
+              className="flex-1 sm:flex-none px-6 py-2.5 bg-rose-500 text-primary-foreground rounded-lg hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
+              type="button"
+              onClick={() => removeRow(index)}
+            >
+              <Trash className="w-4 h-4" />
+              Remove
+            </button>
+          </div>
+        ))}
+
 
         {/* Action Buttons */}
         <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-border">

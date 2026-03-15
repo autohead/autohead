@@ -7,7 +7,7 @@ import VendorsPage from './pages/VendorsPage';
 import ProductsPage from './pages/ProductsPage';
 import BillingPage from './pages/BillingPage';
 import SignInPage from './pages/SignInPage';
-import CategoryPage from './pages/CategoryPage';
+// import CategoryPage from './pages/CategoryPage';
 import { ProductReturnModal } from './components/inventory/ProductReturnModal';
 import { AddEditVendorProduct } from './components/vendorProduct/AddEditVendorProduct';
 import { ProductStockAdjustmentModal } from './components/inventory/ProductStockAdjustmentModal';
@@ -53,28 +53,6 @@ export default function App() {
 
   const handleQuickAction = (action: string) => {
     switch (action) {
-      case 'add-product':
-        setCurrentPage('products');
-        // The Products page will handle showing the add modal
-        break;
-      case 'add-vendor':
-        setCurrentPage('vendors');
-        // The Vendors page will handle showing the add modal
-        break;
-      case 'add-vendor-product':
-        setShowAddVendorProductModal(true);
-        // The Products page will handle showing the add modal
-        break;
-      case 'create-bill':
-        setCurrentPage('billing');
-        break;
-      case 'product-return':
-        setShowReturnModal(true);
-        break;
-      case 'update-stock':
-        setShowStockModal(true);
-        break;
-
       case 'logout':
         alert('Logout feature - Coming soon!');
         break;
@@ -93,8 +71,8 @@ export default function App() {
         return <VendorsPage />;
       case 'billing':
         return <BillingPage />;
-      case 'categories':
-        return <CategoryPage />;
+      // case 'categories':
+      //   return <CategoryPage />;
       default:
         return <DashboardPage />;
     }

@@ -10,14 +10,13 @@ from .serializers import (
     ProductSalesAnalysisSerializer,
     ProductSerializer,
     ProductFormSerializer,
-    CategoryBriefSerializer,
     VendorBriefSerializer,
     ProductBriefSerializer,
     VendorProductBriefSerializer,
     VendorProductFormSerializer,
     VendorProductRead,
 )
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Sum
 from django.db import models
 from django.db.models.functions import Coalesce
@@ -35,15 +34,14 @@ class ProductPagination(PageNumberPagination):
 class ProductListCreateView(generics.ListCreateAPIView):
     queryset = (
         Products.objects.filter(is_active=True)
-        .select_related("category")
         .prefetch_related(
             "vendor_products",
         )
         .order_by("-created_at")
     )
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     pagination_class = ProductPagination
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -52,9 +50,9 @@ class ProductListCreateView(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().annotate(
-            stock_count=Coalesce(
+            stock_supplied=Coalesce(
                 Sum(
-                    "vendor_products__stock",
+                    "vendor_products__stock_supplied",
                     filter=models.Q(vendor_products__is_active=True),
                 ),
                 0,
@@ -62,10 +60,6 @@ class ProductListCreateView(generics.ListCreateAPIView):
         )
 
         page = self.paginate_queryset(queryset)
-
-        categories = CategoryBriefSerializer(
-            Category.objects.filter(is_active=True), many=True
-        ).data
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -80,7 +74,6 @@ class ProductListCreateView(generics.ListCreateAPIView):
                         "current_page": self.paginator.page.number,
                         "total_pages": self.paginator.page.paginator.num_pages,
                     },
-                    "categories": categories,
                 },
                 method="GET",
                 data_name="products",
@@ -89,17 +82,17 @@ class ProductListCreateView(generics.ListCreateAPIView):
         # no pagination fallback
         serializer = self.get_serializer(queryset, many=True)
         return custom_response(
-            data={"products": serializer.data, "categories": categories},
+            data={"products": serializer.data},
             method="GET",
             data_name="products",
         )
 
     def create(self, request, *args, **kwargs):
-        print("RAW DATA:", request.data)
+        # print("Received data:", request.data)  # Debugging line to check incoming data
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return custom_response(data=serializer.data, method="POST", data_name="Product")
+        return custom_response(data=None, method="POST", data_name="Product")
 
 
 class ProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -237,7 +230,7 @@ class ProductSalesAnalysisView(APIView):
             output_field=DecimalField(max_digits=12, decimal_places=2),
         )
 
-        query = BillItem.objects.filter(vendor_product__product_id=pk)
+        query = BillItem.objects.filter(product=pk)
 
         analytics = query.aggregate(
             total_sales=Sum("quantity"),

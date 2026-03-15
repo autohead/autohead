@@ -1,5 +1,5 @@
 from django.db import models
-from product.models import VendorProducts
+from product.models import Products
 
 # Create your models here.
 class Bill(models.Model):
@@ -33,8 +33,8 @@ class BillItem(models.Model):
         on_delete=models.CASCADE,
         related_name="items"
     )
-    vendor_product = models.ForeignKey(
-        VendorProducts,
+    product = models.ForeignKey(
+        Products,
         on_delete=models.PROTECT,
         related_name="items"
     )

@@ -1,11 +1,6 @@
-import { useState } from 'react';
 import { Modal } from '../Modal';
 import { Package, User, AlertTriangle } from 'lucide-react';
-import type { Product, ProductUpdateValues, Category } from '../../types/product';
-import { useProductData } from '../../hooks/product';
-import { AddEditProductModal } from './AddEditProductModal';
-import { toast } from 'react-toastify';
-import { getUserFriendlyError } from '../../utils/errorHelper';
+import type { Product, Category } from '../../types/product';
 import { useGetProductSalesAnalysisQuery } from '../../store/slices/productApiSlice';
 import IsLoadingDisplay from '../common/IsLoadingDisplay';
 import IsErrorDisplay from '../common/IsErrorDisplay';
@@ -17,13 +12,10 @@ interface ProductDetailModalProps {
   categories?: Category[]
 }
 
-export function ProductDetailModal({ isOpen, onClose, product, categories }: ProductDetailModalProps) {
-
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-
-  const { updateProduct, isUpdating } = useProductData(1);
+export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailModalProps) {
 
   const productId = product?.id;
+  console.log("Product ID in Modal:", productId); // Debugging log to check product ID
 
   const {
     data: analysisData,
@@ -37,38 +29,9 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
   if (!product) return null;
 
 
-  const isLowStock = product.stock_count < 20;
+  const isLowStock = product.stock < 20;
 
   const vendorProduts = product.vendor_products;
-
-
-
-
-  const handleUpdateProduct = async (updatedProduct: ProductUpdateValues) => {
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('product_name', updatedProduct.product_name);
-      formDataToSend.append('product_code', updatedProduct.product_code);
-      formDataToSend.append('category', String(updatedProduct.category));
-      formDataToSend.append('description', updatedProduct.description ?? '');
-
-      if (updatedProduct.image instanceof File) {
-        formDataToSend.append('image', updatedProduct.image);
-      }
-      await updateProduct({
-        id: product.id,
-        product: formDataToSend
-      }).unwrap();
-      toast.success('Product updated successfully', { autoClose: 2000 });
-      onClose();
-    } catch (err: any) {
-      const errorMessage = getUserFriendlyError(err, 'Failed to Update product. Please try again.');
-      toast.error(errorMessage, { autoClose: 2000 });
-      throw err;
-    }
-  };
-
-
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Product Details" size="lg">
@@ -79,10 +42,6 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
             <h3 className="text-foreground mb-1">{product.product_name}</h3>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <span>SKU: {product.product_code}</span>
-              <span>•</span>
-              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded">
-                {product.category_detail?.name}
-              </span>
             </div>
           </div>
           {isLowStock && (
@@ -102,7 +61,7 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Stock</p>
-                <p className="text-blue-600">{product.stock_count} units</p>
+                <p className="text-blue-600">{product.stock} units</p>
               </div>
             </div>
           </div>
@@ -132,10 +91,8 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor Name</th>
-                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor Code</th>
                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Cost</th>
-                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Price</th>
-                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Stock</th>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Stock Supplied</th>
 
                   </tr>
                 </thead>
@@ -143,15 +100,13 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
                   {vendorProduts?.map((v) => (
                     <tr key={v.id} className="hover:bg-accent/50 transition-colors">
                       <td className="px-4 py-3.5">{v.vendor_detail?.name}</td>
-                      <td className="px-4 py-3.5 text-sm text-muted-foreground">{v.vendor_code}</td>
                       <td className="px-4 py-3.5 text-sm text-muted-foreground">₹{v.cost}</td>
-                      <td className="px-4 py-3.5 text-center">₹{v.price}</td>
-                      <td className="px-4 py-3.5 text-center">
+                      <td className="px-4 py-3.5 ">
                         <span
-                          className={`${v.stock < 20 ? 'text-amber-600' : 'text-green-600'
+                          className={`${v.stock_supplied < 20 ? 'text-amber-600' : 'text-green-600'
                             }`}
                         >
-                          {v.stock}
+                          {v.stock_supplied} Nos
                         </span>
                       </td>
                     </tr>
@@ -175,21 +130,13 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
                 {/* Label-Value Pairs */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Vendor Code</span>
-                    <span>{v.vendor_code}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Cost</span>
                     <span>₹{v.cost}</span>
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Price</span>
-                    <span>₹{v.price}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Stock</span>
-                    <span className={v.stock < 20 ? 'text-amber-600' : 'text-green-600'}>
-                      {v.stock}
+                    <span>Stock Supplied</span>
+                    <span className={v.stock_supplied < 20 ? 'text-amber-600' : 'text-green-600'}>
+                      {v.stock_supplied} Nos
                     </span>
                   </div>
                 </div>
@@ -241,8 +188,11 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
           </div>
         )}
 
+
+
+
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-5 border-t border-border">
+        {/* <div className="flex flex-col sm:flex-row gap-3 pt-5 border-t border-border">
           <button
             onClick={() => {
               setShowUpdateModal(true);
@@ -250,19 +200,18 @@ export function ProductDetailModal({ isOpen, onClose, product, categories }: Pro
             className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
             Edit Product
           </button>
-        </div>
+        </div> */}
       </div>
 
 
-      <AddEditProductModal
+      {/* <AddEditProductModal
         isOpen={showUpdateModal}
         onClose={() => setShowUpdateModal(false)}
         products={product}
         isSaving={isUpdating}
         mode='edit'
         onSave={handleUpdateProduct}
-        categories={categories}
-      />
+      /> */}
     </Modal>
   );
 }

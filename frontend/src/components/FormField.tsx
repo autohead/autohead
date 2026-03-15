@@ -2,18 +2,19 @@ import type { ReactNode } from 'react';
 import { useRef, useState } from 'react';
 
 interface FormFieldProps {
-  label: string;
+  label?: string;
   required?: boolean;
   children: ReactNode;
   error?: string;
+  compact?: boolean;
 }
 
-export function FormField({ label, required, children, error }: FormFieldProps) {
+export function FormField({ label, required, children, error, compact }: FormFieldProps) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm text-muted-foreground">
+      <label className={`block text-sm text-muted-foreground ${!compact ? "" : "lg:hidden"}`}>
         {label}
-        {required && <span className="text-destructive ml-1">*</span>}
+        {required && <span className="text-destructive ml-1">{label ? "*" : ""}</span>}
       </label>
       {children}
       {error && <p className="text-sm text-destructive">{error}</p>}
