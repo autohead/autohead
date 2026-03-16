@@ -27,9 +27,9 @@ export const vendorApiSlice = baseApi.injectEndpoints({
         }),
 
         // Update vendor
-        updateVendor: builder.mutation<VendorResponse, VendorUpdateData>({
-            query: (vendor) => ({
-                url: `/vendors/${vendor.id}/`,
+        updateVendor: builder.mutation<VendorResponse, {id: number, vendor: VendorFormData}>({
+            query: ({id, vendor}) => ({
+                url: `/vendors/${id}/`,
                 method: HttpMethod.PATCH,
                 body: vendor,
             }),

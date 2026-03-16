@@ -18,7 +18,7 @@ class VendorsPagination(PageNumberPagination):
     
 
 class VendorsListCreateView(generics.ListCreateAPIView):
-    queryset = Vendors.objects.filter(is_active=True).select_related('bank').order_by('-created_at').all()
+    queryset = Vendors.objects.filter(is_active=True).order_by('-created_at').all()
     serializer_class = VendorSerializer
     pagination_class = VendorsPagination
     permission_classes = [IsAuthenticated]
@@ -58,11 +58,8 @@ class VendorsListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        serializer.save()
         return custom_response(data=serializer.data, method='POST', data_name='Vendor')
-    
-    def perform_create(self, serializer):
-        serializer.save(is_active=True)
         
 
 class VendorsUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -72,7 +69,7 @@ class VendorsUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     
     
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', True)  # allow partial update
+        partial = kwargs.pop('partial', False)  # don't allow partial update
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)

@@ -43,6 +43,7 @@ class ProductSerializer(serializers.ModelSerializer):
     stock_supplied = serializers.IntegerField(read_only=True)
     # Nested read-only representation of vendor_products corresponding to this product
     vendor_products = VendorProductSerializer(many=True, read_only=True)
+    
 
     class Meta:
         model = Products

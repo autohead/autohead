@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import { useRef, useState } from 'react';
+import CreatableSelect from "react-select/creatable";
+
 
 interface FormFieldProps {
   label?: string;
@@ -63,7 +65,75 @@ export function Select({ error, options, className = '', ...props }: SelectProps
       {...props}
     >
 
-     
+
+      <option value="">Select Option</option>
+
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+
+interface SearchablSelectProps {
+  name: string;
+  value?: string;
+  onChange: (event: any) => void;
+  options: { value: string; label: string }[];
+  error?: boolean;
+  isSearchable?: boolean;
+
+  
+}
+
+export function SearchableSelect({
+  name,
+  value,
+  onChange,
+  options,
+  error,
+  isSearchable,
+ 
+}: SearchablSelectProps) {
+
+  if (isSearchable) {
+    return (
+      <CreatableSelect
+        options={options}
+        // value={options.find((opt) => opt.value === value) || null}
+        isSearchable
+        isClearable
+        classNamePrefix="react-select"
+
+         value={
+          options.find((opt) => opt.value === value) ||
+          (value ? { value, label: value } : null)
+        }
+        
+
+        onChange={(selected) =>
+          onChange({
+            target: {
+              name,
+              value: selected?.value || "",
+            },
+          })
+        }
+      />
+    );
+  }
+
+  return (
+    <select
+      name={name}
+      value={value}
+      onChange={onChange}
+      className={`w-full px-3 py-2.5 bg-background border ${error ? "border-destructive" : "border-border"
+        } rounded-lg`}
+    >
       <option value="">Select Option</option>
 
       {options.map((option) => (
@@ -124,13 +194,12 @@ export function ImageInput({
         ref={inputRef}
         type="file"
         accept="image/*"
-        className={`w-full px-3 py-2.5 bg-background border ${
-          error ? 'border-destructive' : 'border-border'
-        } rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${className}`}
+        className={`w-full px-3 py-2.5 bg-background border ${error ? 'border-destructive' : 'border-border'
+          } rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${className}`}
         onChange={handleChange}
         {...props}
       />
-      
+
       {preview && (
         <div className="relative w-32 h-32">
           <img
@@ -148,7 +217,7 @@ export function ImageInput({
         </div>
       )}
 
-      
+
     </div>
   );
 }

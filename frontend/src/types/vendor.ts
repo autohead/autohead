@@ -1,35 +1,11 @@
 import type { VendorProduct } from "./vendorProduct";
 
-export interface BankResponse {
-    id?: number;
-    account_number?: string;
-    ifsc_code?: string;
-    is_active: boolean;
-    bank_name?: string;
-    branch_name?: string;
-}
-
-export interface BankInput {
-    bank_name?: string;
-    branch_name?: string;
-    account_number?: string;
-    ifsc_code?: string;
-}
-
-
 export interface VendorResponse {
     id: number;
-    bank?: BankResponse | null;
     vendor_products?: VendorProduct[] | null;
     name: string;
     phone: number;
-    email: string;
-    address?: string;
     is_active: boolean;
-    gst_number?: string;
-    state?: string;
-    city?: string;
-    pincode?: string;
 }
 
 export interface VendorPaginatedResponse {
@@ -51,13 +27,6 @@ export interface VendorListResponse {
 export interface VendorFormData {
     name: string;
     phone: string | number;
-    email: string;
-    address?: string;
-    gst_number?: string;
-    state?: string;
-    city?: string;
-    pincode?: string;
-    bank?: BankInput;
 }
 
 

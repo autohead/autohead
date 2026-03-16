@@ -1,20 +1,14 @@
 import { useState } from 'react';
-import { Search, Plus, Trash, Eye, Phone, Mail, Loader } from 'lucide-react';
+import { Search, Plus, Trash, Eye, Phone, Loader} from 'lucide-react';
 import { AddEditVendorModal } from '../components/vendors/AddEditVendorModal';
 import { VendorDetailModal } from '../components/vendors/VendorDetailsModal';
 import { useVendorData } from '../hooks/vendor';
 import IsLoadingDisplay from '../components/common/IsLoadingDisplay';
 import IsErrorDisplay from '../components/common/IsErrorDisplay';
 import Pagination from '../components/common/Pagination';
-import type { FlatVendorForm } from '../utils/vendorPayLoad';
-import type { VendorResponse } from '../types/vendor';
-import { mapVendorFormToPayload } from '../utils/vendorPayLoad';
+import type { VendorResponse, VendorFormData } from '../types/vendor';
 import { toast } from 'react-toastify';
 import WarningDialoge from '../components/common/WarningDialoge';
-
-
-
-
 
 
 export default function VendorsPage() {
@@ -40,25 +34,19 @@ export default function VendorsPage() {
   const total_pages = data?.total_pages ?? 0;
   const current_page = data?.current_page ?? 0;
 
-
-
-
-
   if (isLoading) return <IsLoadingDisplay />;
   if (isError) return <IsErrorDisplay type='Vendor' />;
-
-
 
 
   const filteredVendors = vendors.filter(
     (vd) =>
       vd.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vd.email.toLowerCase().includes(searchTerm.toLowerCase())
+      vd.phone.toString().includes(searchTerm)
   );
 
-  const handleAddVendor = async (vendorData: FlatVendorForm) => {
+  const handleAddVendor = async (vendorData: VendorFormData) => {
     try {
-      await createVendor(mapVendorFormToPayload(vendorData)).unwrap();
+      await createVendor(vendorData).unwrap();
       toast.success('Vendor added successfully', { autoClose: 2000 });
     } catch (err: any) {
       const errorMessage =
@@ -99,6 +87,8 @@ export default function VendorsPage() {
     }
   }
 
+  
+
   const handleViewVendor = (vendor: VendorResponse) => {
     setSelectedVendor(vendor);
     setShowDetailModal(true);
@@ -113,7 +103,7 @@ export default function VendorsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search vendors by name or email..."
+              placeholder="Search vendors by name or phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -136,10 +126,8 @@ export default function VendorsPage() {
                 <tr>
                   <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor Name</th>
                   <th className="px-4 py-3 text-left text-sm text-muted-foreground">Contact</th>
-                  <th className="px-4 py-3 text-left text-sm text-muted-foreground">Email</th>
-                  <th className="px-4 py-3 text-left text-sm text-muted-foreground">Products Supplied</th>
-                  <th className="px-4 py-3 text-left text-sm text-muted-foreground">Pending Returns</th>
 
+                  <th className="px-4 py-3 text-left text-sm text-muted-foreground">Products Supplied</th>
                   <th className="px-4 py-3 text-left text-sm text-muted-foreground">Actions</th>
                 </tr>
               </thead>
@@ -148,16 +136,10 @@ export default function VendorsPage() {
                   <tr key={vendor.id} className="hover:bg-accent/50 transition-colors">
                     <td className="px-4 py-3.5">{vendor.name}</td>
                     <td className="px-4 py-3.5 text-sm text-muted-foreground">{vendor.phone}</td>
-                    <td className="px-4 py-3.5 text-sm text-muted-foreground">{vendor.email}</td>
-                    <td className="px-4 py-3.5 text-center">{vendor.address}</td>
-                    <td className="px-4 py-3.5 text-center">
-                      <span
-                        className={`${vendor.phone > 0 ? 'text-amber-600' : 'text-green-600'
-                          }`}
-                      >
-                        {vendor.phone}
-                      </span>
-                    </td>
+                    <td className="px-4 py-3.5 text-sm text-muted-foreground">{
+                      vendor.vendor_products?.length || 0
+                    } Nos</td>
+
 
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
@@ -209,10 +191,7 @@ export default function VendorsPage() {
                     <Phone className="w-4 h-4" />
                     <span>{vendor.phone}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Mail className="w-4 h-4" />
-                    <span className="truncate">{vendor.email}</span>
-                  </div>
+
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">

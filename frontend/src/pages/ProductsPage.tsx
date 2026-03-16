@@ -35,6 +35,7 @@ export default function ProductsPage() {
     const products = data?.products.results ?? [];
     const total_pages = data?.products.total_pages ?? 0;
     const current_page = data?.products.current_page ?? 0;
+    const all_vendors = data?.products.all_vendors ?? [];
 
     if (isLoading) return <IsLoadingDisplay />;
     if (isError) return <IsErrorDisplay type='product' />;
@@ -54,7 +55,7 @@ export default function ProductsPage() {
             toast.success('Product added successfully', { autoClose: 2000 });
         } catch (err: any) {
             const errorMessage = getUserFriendlyError(err, 'Failed to add product. Please try again.');
-            toast.error(errorMessage, { autoClose: 2000 });
+            toast.error(errorMessage ?? 'Failed to add product. Please try again.', { autoClose: 2000 });
             throw err;
         }
     };
@@ -260,6 +261,8 @@ export default function ProductsPage() {
                 onSave={handleAddProduct}
                 mode="add"
                 isSaving={isCreating}
+                products={products}
+                vendors = {all_vendors}
             />
 
             <ProductDetailModal

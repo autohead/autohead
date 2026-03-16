@@ -6,12 +6,10 @@ type ProductBasic = Pick<Product, 'id' | 'product_name'>;
 
 export interface VendorProduct  {
     id: number;
-    vendor_code: string;
     vendor_detail?: Vendor | null;
     product_detail?: ProductBasic | null;
-    price: number,
-    cost: number,
-    stock: number,
+    stock_supplied?: number | null;
+    cost?: number,
     is_active: boolean,
     product: number,
     vendor: number
@@ -28,7 +26,7 @@ export interface VendorProductFormValues  {
 }
 
 
-type VendorProductStockFormValues = Pick<VendorProduct,  'stock'>;
+type VendorProductStockFormValues = Pick<VendorProduct,  'stock_supplied'>;
 
 export interface VendorProductUpdateValues extends VendorProductStockFormValues {
     id: number

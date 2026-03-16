@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Modal } from '../Modal';
-import { FormField, Input } from '../FormField';
+import { FormField, Input,  SearchableSelect } from '../FormField';
 import { Save, X, Trash } from 'lucide-react';
-import type { Product, ProductFormValues } from '../../types/product';
+import type { Product, ProductFormValues, Vendor } from '../../types/product';
 import { toast } from 'react-toastify';
+
 
 
 interface AddEditProductModalProps {
@@ -12,12 +13,13 @@ interface AddEditProductModalProps {
   mode: 'add' | 'edit';
   onSave: (product: any) => void;
   isSaving: boolean
-  products?: Product | null;
+  products?: Product[] | null;
+  vendors?: Vendor[] | null;
 }
 
 
 
-export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, isSaving }: AddEditProductModalProps) {
+export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, isSaving, vendors }: AddEditProductModalProps) {
   const [formData, setFormData] = useState({
     vendor_name: '',
     vendor_contact: '',
@@ -33,25 +35,6 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
     }
   ])
 
-  // Initialize form data when editing an existing product
-  useEffect(() => {
-    if (products) {
-      setFormData({
-        vendor_name: "",
-        vendor_contact: ""
-      });
-
-      setRows([
-        {
-          product_name: products.product_name ?? "",
-          product_code: products.product_code ?? "",
-          stock: String(products.stock ?? ""),
-          cost: String(products.cost ?? ""),
-          price: String(products.price ?? "")
-        }
-      ]);
-    }
-  }, [products]);
 
   // Add new row on Enter key press
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
@@ -62,6 +45,13 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
       const currentRow = rows[index];
       if (!currentRow.product_name || !currentRow.product_code || !currentRow.stock || !currentRow.cost || !currentRow.price) {
         toast.error("Please fill all fields before adding a new row.");
+        return;
+      }
+
+      // prevent duplicated product codes
+      const isDuplicateCode = rows.some((row, i) => row.product_code === currentRow.product_code && i !== index);
+      if (isDuplicateCode) {
+        toast.error("Product code already exists.");
         return;
       }
 
@@ -97,6 +87,7 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
+    console.log(name, value);
   };
 
   // Handle change for dynamic rows
@@ -120,11 +111,11 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.vendor_name.trim())
-      newErrors.vendor_name = 'Vendor name is required';
+    // if (!formData.vendor_name.trim())
+    //   newErrors.vendor_name = 'Vendor name is required';
 
-    if (!formData.vendor_contact.trim() || formData.vendor_contact.trim().length < 10)
-      newErrors.vendor_contact = 'Valid contact number is required';
+    // if (!formData.vendor_contact.trim() || formData.vendor_contact.trim().length < 10)
+    //   newErrors.vendor_contact = 'Valid contact number is required';
 
     rows.forEach((row, index) => {
       if (!row.product_name.trim())
@@ -166,7 +157,7 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
           product_code: row.product_code,
           stock: row.stock,
           cost: row.cost,
-          price: row.price
+          selling_price: row.price
         }))
       };
       try {
@@ -207,12 +198,37 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
 
           {/* Vendor Name */}
           <FormField label="Vendor Name" required error={errors.vendor_name}>
-            <Input
+            <SearchableSelect
               name="vendor_name"
               value={formData.vendor_name}
-              onChange={handleChange}
-              placeholder="axo automotive"
+              onChange={(e) => {
+                const vendorName = e.target.value;
+
+                if (!vendorName) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    vendor_name: "",
+                    vendor_contact: "",
+                  }));
+                  return;
+                }
+
+                const vendor = vendors?.find((v) => v.name === vendorName);
+
+                setFormData((prev) => ({
+                  ...prev,
+                  vendor_name: vendor?.name || vendorName,
+                  vendor_contact: vendor?.phone || "",
+                }));
+              }}
+              options={
+                vendors?.map((vendor) => ({
+                  value: vendor.name,
+                  label: vendor.name,
+                })) ?? []
+              }
               error={!!errors.vendor_name}
+              isSearchable
             />
           </FormField>
 
@@ -220,6 +236,7 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
           {/* Vendor Contacts */}
           <FormField label="Contact Number" required error={errors.vendor_contact}>
             <Input
+              type="number"
               name="vendor_contact"
               value={formData.vendor_contact}
               onChange={handleChange}
@@ -253,12 +270,49 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
           <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-5 pb-2">
             {/* Product Name */}
             <FormField label="Product Name" compact required error={errors[`product_name_${index}`]}>
-              <Input
+              <SearchableSelect
                 name="product_name"
                 value={formData.product_name}
-                onChange={(e) => handleRowChange(e, index)}
-                placeholder="e.g., Premium Floor Mats"
+                onChange={(e) => {
+                  const productName = e.target.value;
+
+                  if (!productName) {
+                    setRows((prev) => {
+                      const updated = [...prev];
+                      updated[index] = {
+                        ...updated[index],
+                        product_name: "",
+                        product_code: "",
+                        stock: "",
+                        cost: "",
+                        price: "",
+                      };
+                      return updated;
+                    });
+                    return;
+                  }
+
+                  const product = products?.find((p) => p.product_name === productName);
+
+                  setRows((prev) => {
+                    const updated = [...prev];
+                    updated[index] = {
+                      ...updated[index],
+                      product_name: product?.product_name || productName,
+                      product_code: product?.product_code || "",
+                      stock: product ? String(product.stock) : "",
+                      cost: product ? String(product.cost) : "",
+                      price: product ? String(product.price) : "",
+                    };
+                    return updated;
+                  })
+                }}
+                options={products?.map((cat) => ({
+                  value: cat.product_name,
+                  label: cat.product_name,
+                })) ?? []}
                 error={!!errors[`product_name_${index}`]}
+                isSearchable
               />
             </FormField>
 

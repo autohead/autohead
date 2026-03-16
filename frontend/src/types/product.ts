@@ -6,6 +6,7 @@ export interface Category {
 export interface Vendor {
     id: number;
     name: string;
+    phone?: string; 
 }
 
 export interface VendorProduct {
@@ -38,6 +39,7 @@ export interface Paginated {
     previous: string | null;
     total_pages: number;
     results: Product[];
+    all_vendors?: Vendor[] | null;
 }
 
 export interface ProductListData {
@@ -70,7 +72,7 @@ export interface ProductItem {
   product_code: string;
   stock: string;
   cost: string;
-  price: string;
+  selling_price: string;
 }
 
 export interface VendorData {

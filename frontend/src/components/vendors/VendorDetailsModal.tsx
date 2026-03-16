@@ -3,19 +3,11 @@ import { Modal } from '../Modal';
 import {
   Package,
   Phone,
-  Mail,
-  MapPin,
-  CreditCard,
   TrendingUp,
-  AlertCircle,
-  Calendar,
-  FileText
 } from 'lucide-react';
 import { AddEditVendorModal } from './AddEditVendorModal';
-import type { VendorResponse, } from '../../types/vendor';
-import type { FlatVendorForm } from '../../utils/vendorPayLoad';
+import type { VendorResponse, VendorUpdateData } from '../../types/vendor';
 import { useVendorData } from '../../hooks/vendor';
-import { mapVendorFormToPayload } from '../../utils/vendorPayLoad';
 import { toast } from 'react-toastify';
 
 
@@ -37,14 +29,12 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
 
   if (!vendor) return null;
 
-  const outstandingBalance = 145000;
-
-  const handleUpdateVendor = async (VendorData: FlatVendorForm) => {
+  const handleUpdateVendor = async (VendorData: VendorUpdateData) => {
     try {
       await updateVendor(
         {
-          id: vendor.id,
-          ...mapVendorFormToPayload(VendorData)
+          id: Number(vendor.id),
+          vendor: VendorData
         }
       ).unwrap();
       toast.success('vendor updated successfully', { autoClose: 2000 });
@@ -53,7 +43,7 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
     } catch (err: any) {
       const errorMessage =
         err?.data?.errors?.name?.[0] ||
-        err?.data?.errors?.email?.[0] ||
+        err?.data?.errors?.phone?.[0] ||
         'Failed to update vendor. Please try again.';
       toast.error(errorMessage, { autoClose: 2000 });
 
@@ -61,7 +51,7 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Vendor Details" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Vendor Details" size="md">
       <div className="space-y-6">
         {/* Header Section */}
         <div className="flex items-start justify-between pb-5 border-b border-border">
@@ -72,19 +62,16 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
                 <Phone className="w-4 h-4" />
                 <span>{vendor.phone}</span>
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Mail className="w-4 h-4" />
-                <span>{vendor.email}</span>
-              </div>
+            
             </div>
           </div>
           <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-sm capitalize">
-            {vendor.is_active ? 'active' : 'inactive'}
+            Active
           </span>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
           <div className="bg-blue-50 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -103,80 +90,10 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
                 <TrendingUp className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Value</p>
-                <p className="text-purple-600">₹0</p>
+                <p className="text-sm text-muted-foreground">Total Stocks</p>
+                <p className="text-purple-600">{vendor.vendor_products?.reduce((total, product) => total + (product.stock_supplied || 0), 0) || 0} Nos</p>
               </div>
             </div>
-          </div>
-
-          <div className={`${10 > 0 ? 'bg-amber-50' : 'bg-green-50'} rounded-xl p-4`}>
-            <div className="flex items-center gap-3">
-              <div className={`p-2 ${10 > 0 ? 'bg-amber-100' : 'bg-green-100'} rounded-lg`}>
-                <AlertCircle className={`w-5 h-5 ${10 > 0 ? 'text-amber-600' : 'text-green-600'}`} />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Returns</p>
-                <p className={10 > 0 ? 'text-amber-600' : 'text-green-600'}>
-                  {10}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-orange-50 rounded-xl p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Calendar className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Last Txn</p>
-                <p className="text-orange-600 text-sm">03/11/2000</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Vendor Information */}
-        <div className="space-y-4">
-          <h4>Vendor Information</h4>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Outstanding Balance */}
-            <div className="bg-accent/50 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <CreditCard className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Outstanding Balance</p>
-              </div>
-              <p className="text-destructive">₹{outstandingBalance.toLocaleString()}</p>
-            </div>
-
-            {/* Credit Period */}
-            <div className="bg-accent/50 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Credit Period</p>
-              <p>30 days</p>
-            </div>
-
-            {/* GST Number */}
-            {vendor.gst_number && (
-              <div className="bg-accent/50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText className="w-4 h-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">GST Number</p>
-                </div>
-                <p className="text-sm">{vendor.gst_number}</p>
-              </div>
-            )}
-
-            {/* Address */}
-            {vendor.address && (
-              <div className="bg-accent/50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Address</p>
-                </div>
-                <p className="text-sm">{vendor.address}</p>
-              </div>
-            )}
           </div>
         </div>
 
@@ -191,10 +108,8 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Product Name</th>
-                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor Code</th>
                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Cost</th>
-                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Price</th>
-                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Stock</th>
+                    <th className="px-4 py-3 text-left text-sm text-muted-foreground">Stock Supplied</th>
 
 
                   </tr>
@@ -203,15 +118,15 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
                   {vendor.vendor_products?.map((v) => (
                     <tr key={v.id} className="hover:bg-accent/50 transition-colors">
                       <td className="px-4 py-3.5">{v.product_detail?.product_name}</td>
-                      <td className="px-4 py-3.5 text-sm text-muted-foreground">{v.vendor_code}</td>
+                      
                       <td className="px-4 py-3.5 text-sm text-muted-foreground">{v.cost}</td>
-                      <td className="px-4 py-3.5 text-center">{v.price}</td>
-                      <td className="px-4 py-3.5 text-center">
+                      
+                      <td className="px-4 py-3.5 ">
                         <span
-                          className={`${v.stock < 20 ? 'text-amber-600' : 'text-green-600'
+                          className={`${v.stock_supplied && v.stock_supplied < 20 ? 'text-amber-600' : 'text-green-600'
                             }`}
                         >
-                          {v.stock}
+                          {v.stock_supplied} Nos
                         </span>
                       </td>
                     </tr>
@@ -233,22 +148,16 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
 
                 {/* Label-Value Pairs */}
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Vendor Code</span>
-                    <span>{v.vendor_code}</span>
-                  </div>
+                  
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Cost</span>
                     <span>{v.cost}</span>
                   </div>
+                 
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Price</span>
-                    <span>{v.price}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Stock</span>
-                    <span className={v.stock < 20 ? 'text-amber-600' : 'text-green-600'}>
-                      {v.stock}
+                    <span>Stock Supplied</span>
+                    <span className={v.stock_supplied && v.stock_supplied < 20 ? 'text-amber-600' : 'text-green-600'}>
+                      {v.stock_supplied}
                     </span>
                   </div>
                 </div>
@@ -274,9 +183,9 @@ export function VendorDetailModal({ isOpen, onClose, vendor }: VendorDetailModal
             className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
             Edit Vendor
           </button>
-          <button className="flex-1 px-4 py-2.5 border border-border rounded-lg hover:bg-accent transition-colors">
+          {/* <button className="flex-1 px-4 py-2.5 border border-border rounded-lg hover:bg-accent transition-colors">
             View All Returns
-          </button>
+          </button> */}
         </div>
       </div>
 

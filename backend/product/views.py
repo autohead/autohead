@@ -60,6 +60,9 @@ class ProductListCreateView(generics.ListCreateAPIView):
         )
 
         page = self.paginate_queryset(queryset)
+        
+        #All vendors
+        all_vendors = Vendors.objects.filter(is_active=True).values("id", "name", "phone")
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -73,6 +76,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
                         "results": serializer.data,
                         "current_page": self.paginator.page.number,
                         "total_pages": self.paginator.page.paginator.num_pages,
+                        "all_vendors": all_vendors,
                     },
                 },
                 method="GET",
@@ -82,9 +86,10 @@ class ProductListCreateView(generics.ListCreateAPIView):
         # no pagination fallback
         serializer = self.get_serializer(queryset, many=True)
         return custom_response(
-            data={"products": serializer.data},
+            data={"products": serializer.data, "all_vendors": all_vendors},
             method="GET",
             data_name="products",
+        
         )
 
     def create(self, request, *args, **kwargs):
