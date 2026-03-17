@@ -137,19 +137,19 @@ class DropdownDataList(generics.ListAPIView):
             Products.objects.filter(is_active=True), many=True
         ).data
 
-        vendor_data = VendorBriefSerializer(
-            Vendors.objects.filter(is_active=True), many=True
-        ).data
+        # vendor_data = VendorBriefSerializer(
+        #     Vendors.objects.filter(is_active=True), many=True
+        # ).data
 
-        vendor_products = VendorProductBriefSerializer(
-            VendorProducts.objects.filter(is_active=True), many=True
-        ).data
+        # vendor_products = VendorProductBriefSerializer(
+        #     VendorProducts.objects.filter(is_active=True), many=True
+        # ).data
 
         return custom_response(
             data={
                 "products": products,
-                "vendors": vendor_data,
-                "vendor_products": vendor_products,
+                # "vendors": vendor_data,
+                # "vendor_products": vendor_products,
             },
             method="GET",
             data_name="dropdown_data",

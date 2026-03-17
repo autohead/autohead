@@ -1,6 +1,6 @@
 
 export interface BillFormItem {
-    vendor_product: number;
+    product: number;
     quantity: number;
     selling_price: number;
 }

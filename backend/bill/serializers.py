@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Bill, BillItem
-from product.models import VendorProducts
+from product.models import Products
 from django.db import transaction
 from decimal import Decimal
 
@@ -8,7 +8,7 @@ from decimal import Decimal
 class BillItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = BillItem
-        fields = ["vendor_product", "quantity", "selling_price"]
+        fields = ["id", "bill", "product", "quantity", "selling_price"]
         read_only_fields = ["id", "created_at", "updated_at", "bill"]
 
 
@@ -35,6 +35,8 @@ class BillFormSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         items_data = validated_data.pop("items", [])
         discount = validated_data.get("discount", Decimal("0.00"))
+        
+        
 
         if not items_data:
             raise serializers.ValidationError(
@@ -47,12 +49,12 @@ class BillFormSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             # Loop through items and handle stock safely
             for item in items_data:
-                vp = VendorProducts.objects.select_for_update().get(id=item["vendor_product"].id)
+                vp = Products.objects.select_for_update().get(id=item["product"].id)
 
                 if item["quantity"] > vp.stock:
                     raise serializers.ValidationError(
                         {
-                            "items": f"Insufficient stock for product '{vp.product.product_name}'. "
+                            "items": f"Insufficient stock for product '{vp.product_name}'. "
                                      f"Available stock: {vp.stock}, requested: {item['quantity']}."
                         }
                     )

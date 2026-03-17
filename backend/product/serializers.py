@@ -18,7 +18,7 @@ class VendorBriefSerializer(serializers.ModelSerializer):
 class ProductBriefSerializer(serializers.ModelSerializer):
     class Meta:
         model = Products
-        fields = ["id", "product_name"]
+        fields = ["id", "product_name", "product_code", "stock", "price", "cost"]
 
 
 class VendorProductBriefSerializer(serializers.ModelSerializer):

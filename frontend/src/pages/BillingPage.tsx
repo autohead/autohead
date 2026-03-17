@@ -8,48 +8,40 @@ import { getUserFriendlyError } from '../utils/errorHelper';
 
 interface CartItem {
     id: number;
-    vendorProductId: number;
+    productId: number;
     name: string;
     sku: string;
     price: number;
     quantity: number;
+    product_code: string;
 }
 
 
 export default function BillingPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [cart, setCart] = useState<CartItem[]>([]);
-    const [discount, setDiscount] = useState(0);
+    const [discount, setDiscount] = useState("");
     const [customerName, setCustomerName] = useState('');
-    const { data  } = useDropDownData();
+    const { data: dropDownData } = useDropDownData();
     const {
         data: billData,
         isCreating, createBill
     } = useBillingData();
 
-    const products: DropDownListData['products'] = data?.products || [];
-    const vendorProducts: DropDownListData['vendor_products'] = data?.vendor_products || [];
+    const products: DropDownListData['products'] = dropDownData?.products || [];
     const billHistory = billData || [];
+    console.log("BIll data:", billHistory); // Debugging line
 
-
-
-    // Get products by ID
-    const productsById = useMemo(() => {
-        return (products || []).reduce((acc: Record<number, typeof products[0]>, product) => {
-            acc[product.id] = product;
-            return acc;
-        }, {});
-    }, [data]);
-
-    // Map vendor products to include stock info
+    // products to include stock info
     const productsWithStock = useMemo(() => {
-        return (vendorProducts || []).map((vp) => ({
+        return (products || []).map((vp) => ({
             id: vp.id,
-            product_name: productsById[vp.product]?.product_name,
+            product_name: vp.product_name,
             stock: vp.stock,
             price: vp.price,
+            product_code: vp.product_code,
         }));
-    }, [vendorProducts, productsById]);
+    }, [products]);
 
     // Filter products based on search term
     const filteredProducts = useMemo(() => {
@@ -61,7 +53,7 @@ export default function BillingPage() {
 
 
     const addToCart = (product: typeof productsWithStock[0]) => {
-        const existingItem = cart.find((item) => item.vendorProductId === product.id);
+        const existingItem = cart.find((item) => item.productId === product.id);
         const availableStock = product.stock;
 
         // Check stock before adding
@@ -73,7 +65,7 @@ export default function BillingPage() {
         if (existingItem) {
             setCart(
                 cart.map((item) =>
-                    item.vendorProductId === product.id
+                    item.productId === product.id
                         ? { ...item, quantity: item.quantity + 1 }
                         : item
                 )
@@ -83,11 +75,12 @@ export default function BillingPage() {
                 ...cart,
                 {
                     id: Date.now(),
-                    vendorProductId: product.id,
+                    productId: product.id,
                     name: product.product_name,
-                    sku: "suku",
+                    sku: product.product_code,
                     price: product.price,
                     quantity: 1,
+                    product_code: product.product_code,
                 },
             ]);
         }
@@ -95,6 +88,16 @@ export default function BillingPage() {
 
 
     const updateQuantity = (itemId: number, delta: number) => {
+
+        // check stock before updating
+        const item = cart.find((item) => item.id === itemId);
+        // const product = productsWithStock[item?.productId || 0];
+        const availableStock = products?.find((p) => p.id === item?.productId)?.stock
+         || 0;
+        if (item && delta > 0 && item.quantity >= availableStock) {
+            alert('Cannot add more items than available in stock.');
+            return;
+        }
         setCart(
             cart
                 .map((item) =>
@@ -111,7 +114,7 @@ export default function BillingPage() {
     };
 
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const discountAmount = (subtotal * discount) / 100;
+    const discountAmount = (subtotal * Number(discount)) / 100;
     const total = subtotal - discountAmount;
 
     const handleGenerateBill = async () => {
@@ -125,17 +128,19 @@ export default function BillingPage() {
                 customer_name: customerName,
                 discount: discountAmount,
                 items: cart.map((item) => ({
-                    vendor_product: item.vendorProductId,
+                    product: item.productId,
                     quantity: item.quantity,
                     selling_price: item.price,
                 })),
             };
 
+
+            console.log("Payload for bill creation:", payload); // Debugging line
             await createBill(payload).unwrap();
 
             toast.success('Bill generated successfully', { autoClose: 2000 });
             setCart([]);
-            setDiscount(0);
+            setDiscount("");
             setCustomerName('');
             setSearchTerm('');
         } catch (err) {
@@ -176,7 +181,7 @@ export default function BillingPage() {
                                 >
                                     <div className="flex-1">
                                         <p>{product.product_name}</p>
-                                        <p className="text-sm text-muted-foreground">suk • Stock: {product.stock}</p>
+                                        <p className="text-sm text-muted-foreground">SKU: {product.product_code} • Stock: {product.stock}</p>
                                     </div>
                                     <div className="text-right">
                                         <p>₹{product.price}</p>
@@ -268,7 +273,11 @@ export default function BillingPage() {
                                     min="0"
                                     max="100"
                                     value={discount}
-                                    onChange={(e) => setDiscount(Math.min(100, Math.max(0, Number(e.target.value))))}
+                                    onChange={(e) => {
+                                        const value = Math.min(100, Math.max(0, Number(e.target.value)));
+                                        setDiscount(value.toString());
+                                    }
+                                    }
                                     className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                                 />
                             </div>
