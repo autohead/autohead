@@ -25,7 +25,7 @@ class DashboardView(APIView):
     def get(self, request):
 
         total_products = Products.objects.filter(is_active=True).count()
-        low_stock = VendorProducts.objects.filter(is_active=True, stock__lt=5).count()
+        low_stock = Products.objects.filter(is_active=True, stock__lt=5).count()
         total_vendors = Vendors.objects.filter(is_active=True).count()
 
         bill_query = Bill.objects.all()
@@ -44,15 +44,12 @@ class DashboardView(APIView):
         )
 
         low_stock_products = (
-            VendorProducts.objects.filter(
-                is_active=True, stock__lt=5, product__isnull=False
+            Products.objects.filter(
+                is_active=True, stock__lt=5
             )
-            .select_related("vendor", "product")
             .values(
-                "vendor__id",
-                "vendor__name",
-                "product__id",
-                "product__product_name",
+                "product_name",
+                "product_code",
                 "stock",
             )
         )

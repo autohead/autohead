@@ -30,8 +30,7 @@ export default function BillingPage() {
 
     const products: DropDownListData['products'] = dropDownData?.products || [];
     const billHistory = billData || [];
-    console.log("BIll data:", billHistory); // Debugging line
-
+    
     // products to include stock info
     const productsWithStock = useMemo(() => {
         return (products || []).map((vp) => ({

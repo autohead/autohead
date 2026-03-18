@@ -6,10 +6,8 @@ export interface MonthlySalesData {
 }
 
 export interface LowStockProducts {
-    vendor__id: number;
-    vendor__name: string;
-    product__id: number;
-    product__product_name: string;
+    product_name: string;
+    product_code: string;
     stock: number
 }
 

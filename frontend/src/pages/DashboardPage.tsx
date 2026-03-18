@@ -46,7 +46,7 @@ export default function DashboardPage() {
         {
             title: 'Total Products',
             value: dashboardData?.total_products,
-            change: '+12%',
+            // change: '+12%',
             trend: 'up',
             icon: Package,
             color: 'text-blue-600',
@@ -55,8 +55,8 @@ export default function DashboardPage() {
         {
             title: 'Low Stock Items',
             value: dashboardData?.low_stock,
-            change: '+5',
-            trend: 'up',
+            // change: '+5',
+            trend: 'down',
             icon: AlertTriangle,
             color: 'text-amber-600',
             bgColor: 'bg-amber-50',
@@ -64,7 +64,7 @@ export default function DashboardPage() {
         {
             title: 'Total Vendors',
             value: dashboardData?.total_vendors,
-            change: '+3',
+            // change: '+3',
             trend: 'up',
             icon: Users,
             color: 'text-purple-600',
@@ -73,7 +73,7 @@ export default function DashboardPage() {
         {
             title: "Today's Sales",
             value: dashboardData?.total_sales_today,
-            change: '+18%',
+            // change: '+18%',
             trend: 'up',
             icon: DollarSign,
             color: 'text-green-600',
@@ -82,7 +82,7 @@ export default function DashboardPage() {
         {
             title: 'Total Bills Generated',
             value: dashboardData?.total_bills,
-            change: '+24',
+            // change: '+24',
             trend: 'up',
             icon: FileText,
             color: 'text-indigo-600',
@@ -91,7 +91,7 @@ export default function DashboardPage() {
         {
             title: 'Monthly Revenue',
             value: '₹' + dashboardData?.monthly_revenue,
-            change: '+22%',
+            // change: '+22%',
             trend: 'up',
             icon: TrendingUp,
             color: 'text-cyan-600',
@@ -130,9 +130,9 @@ export default function DashboardPage() {
                                         ) : (
                                             <TrendingDown className="w-4 h-4 text-red-600" />
                                         )}
-                                        <span className={`text-sm ${kpi.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                        {/* <span className={`text-sm ${kpi.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
                                             {kpi.change}
-                                        </span>
+                                        </span> */}
                                     </div>
                                 </div>
                                 <div className={`${kpi.bgColor} ${kpi.color} p-3 rounded-lg`}>
@@ -203,8 +203,8 @@ export default function DashboardPage() {
                                 <div key={index} className="p-4 hover:bg-accent/50 transition-colors">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm truncate">{alert.product__product_name}</p>
-                                            <p className="text-sm text-muted-foreground mt-1">SKU: {alert.vendor__name}</p>
+                                            <p className="text-sm truncate">{alert.product_name}</p>
+                                            <p className="text-sm text-muted-foreground mt-1">SKU: {alert.product_code}</p>
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className="text-sm text-amber-600">{alert.stock} units</p>
