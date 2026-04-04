@@ -5,6 +5,7 @@ import {
     FileText,
     Menu,
     X,
+    Receipt,
     // LayoutGrid,
 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onToggle, onQuickActi
         { id: 'products', label: 'Products', icon: Package },
         { id: 'vendors', label: 'Vendors', icon: Users },
         { id: 'billing', label: 'Billing', icon: FileText },
+        {id: 'billRecords', label: 'Bill Records', icon: Receipt},
     ];
 
 

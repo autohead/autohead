@@ -70,7 +70,7 @@ export interface ProductAnalysisApiResponse {
 export interface ProductItem {
   product_name: string;
   product_code: string;
-  stock: string;
+  stock: string | number;
   cost: string;
   selling_price: string;
 }

@@ -23,7 +23,7 @@ export const vendorApiSlice = baseApi.injectEndpoints({
                 method: HttpMethod.POST,
                 body: vendor,
             }),
-            invalidatesTags: ["Vendor", "DropDown"],
+            invalidatesTags: ["Vendor", "DropDown", "Product"],
         }),
 
         // Update vendor
@@ -33,7 +33,7 @@ export const vendorApiSlice = baseApi.injectEndpoints({
                 method: HttpMethod.PATCH,
                 body: vendor,
             }),
-            invalidatesTags: ["Vendor"],
+            invalidatesTags: ["Vendor", "Product"],
         }),
 
         deleteVendor: builder.mutation<void, number>({
@@ -41,7 +41,7 @@ export const vendorApiSlice = baseApi.injectEndpoints({
                 url: `/vendors/${id}/`,
                 method: HttpMethod.DELETE,
             }),
-            invalidatesTags: ["Vendor"],
+            invalidatesTags: ["Vendor", "Product"],
         })
     }),
 });

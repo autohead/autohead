@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../Modal';
-import { FormField, Input,  SearchableSelect } from '../FormField';
+import { FormField, Input, SearchableSelect } from '../FormField';
 import { Save, X, Trash } from 'lucide-react';
 import type { Product, ProductFormValues, Vendor } from '../../types/product';
 import { toast } from 'react-toastify';
@@ -41,9 +41,11 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
     if (e.key === "Enter") {
       e.preventDefault();
 
-      // prevent adding new rows if all fields are not filled
+
       const currentRow = rows[index];
-      if (!currentRow.product_name || !currentRow.product_code || !currentRow.stock || !currentRow.cost || !currentRow.price) {
+
+      // prevent adding any empty rows
+      if (rows.some(row => !row.product_name || !row.product_code || !row.cost || !row.price)) {
         toast.error("Please fill all fields before adding a new row.");
         return;
       }
@@ -52,6 +54,14 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
       const isDuplicateCode = rows.some((row, i) => row.product_code === currentRow.product_code && i !== index);
       if (isDuplicateCode) {
         toast.error("Product code already exists.");
+        return;
+      }
+
+      // prevent substracting more stock than existing quantity when editing an existing product
+      const existingProduct = products?.find(p => p.product_code === currentRow.product_code);
+      const totalStock = Number(currentRow.stock) + (existingProduct ? Number(existingProduct.stock) : 0);
+      if (existingProduct && totalStock < 0) {
+        toast.error("cannot reduce stock more than existing quantity.");
         return;
       }
 
@@ -111,8 +121,8 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    // if (!formData.vendor_name.trim())
-    //   newErrors.vendor_name = 'Vendor name is required';
+    if (formData.vendor_name.trim() && !formData.vendor_contact.trim())
+      newErrors.vendor_contact = 'Valid contact number is required';
 
     // if (!formData.vendor_contact.trim() || formData.vendor_contact.trim().length < 10)
     //   newErrors.vendor_contact = 'Valid contact number is required';
@@ -124,14 +134,22 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
       if (!row.product_code.trim())
         newErrors[`product_code_${index}`] = "Product code is required";
 
-      if (!row.stock)
-        newErrors[`stock_${index}`] = "Stock is required";
+      // if (!row.stock)
+      //   newErrors[`stock_${index}`] = "Stock is required";
 
       if (!row.cost)
         newErrors[`cost_${index}`] = "Cost is required";
 
       if (!row.price)
         newErrors[`price_${index}`] = "Price is required";
+
+      if (row.stock) {
+        const existingProduct = products?.find(p => p.product_code === row.product_code);
+        const totalStock = Number(row.stock) + (existingProduct ? Number(existingProduct.stock) : 0);
+        if (existingProduct && totalStock < 0) {
+          newErrors[`stock_${index}`] = "cannot reduce stock more than existing quantity.";
+        }
+      }
     });
 
     setErrors(newErrors);
@@ -155,7 +173,7 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
         product_data: rows.map((row) => ({
           product_name: row.product_name,
           product_code: row.product_code,
-          stock: row.stock,
+          stock: isNaN(Number(row.stock)) ? 0 : Number(row.stock),
           cost: row.cost,
           selling_price: row.price
         }))
@@ -236,10 +254,20 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
           {/* Vendor Contacts */}
           <FormField label="Contact Number" required error={errors.vendor_contact}>
             <Input
-              type="number"
+              type="text"
               name="vendor_contact"
+              maxLength={10}
               value={formData.vendor_contact}
-              onChange={handleChange}
+              onChange={
+                (e) => {
+                  let numericValue = e.target.value.replace(/[^0-9]/g, '');
+                  numericValue = numericValue.slice(0, 10);
+                  setFormData((prev) => ({
+                    ...prev,
+                    vendor_contact: numericValue,
+                  }));
+                }
+              }
               placeholder="+91 1234567890"
               error={!!errors.vendor_contact}
             />
@@ -300,7 +328,7 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
                       ...updated[index],
                       product_name: product?.product_name || productName,
                       product_code: product?.product_code || "",
-                      stock: product ? String(product.stock) : "",
+                      stock: '',
                       cost: product ? String(product.cost) : "",
                       price: product ? String(product.price) : "",
                     };
@@ -333,7 +361,12 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
                 name="stock"
                 type="number"
                 value={formData.stock}
-                onChange={(e) => handleRowChange(e, index)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const numericValue = value.replace(/[^0-9.]/g, '');
+                  e.target.value = numericValue;
+                  handleRowChange(e, index)
+                }}
                 placeholder="50 NOS"
                 error={!!errors[`stock_${index}`]}
               />
@@ -343,9 +376,14 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
             <FormField label="Cost" compact required error={errors[`cost_${index}`]}>
               <Input
                 name="cost"
-                type="number"
+                type="text"
                 value={formData.cost}
-                onChange={(e) => handleRowChange(e, index)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const numericValue = value.replace(/[^0-9.]/g, '');
+                  e.target.value = numericValue;
+                  handleRowChange(e, index)
+                }}
                 placeholder="500.00"
                 error={!!errors[`cost_${index}`]}
               />
@@ -355,9 +393,14 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
             <FormField label="Selling Price" compact required error={errors[`price_${index}`]}>
               <Input
                 name="price"
-                type="number"
+                type="text"
                 value={formData.price}
-                onChange={(e) => handleRowChange(e, index)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const numericValue = value.replace(/[^0-9.]/g, '');
+                  e.target.value = numericValue;
+                  handleRowChange(e, index)
+                }}
                 placeholder="500.00"
                 error={!!errors[`price_${index}`]}
                 onKeyDown={(e) => handleKeyDown(e, index)}

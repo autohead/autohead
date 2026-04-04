@@ -21,7 +21,7 @@ export const billingApiSlice = baseApi.injectEndpoints({
                 method: HttpMethod.POST,
                 body: bill,
             }),
-            invalidatesTags : ["Billing", "DropDown", "Dashboard"],
+            invalidatesTags : ["Billing", "DropDown", "Dashboard", "Product"],
         }), 
 
     })

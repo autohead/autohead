@@ -74,7 +74,7 @@ class BillFormSerializer(serializers.ModelSerializer):
             total_amount = net_amount - discount
             if total_amount < 0:
                 raise serializers.ValidationError(
-                    {"discount": "Discount cannot exceed net amount."}
+                    {"discount": "Discount Amount Cannot be greater than Net Amount."}
                 )
 
             # Create the Bill

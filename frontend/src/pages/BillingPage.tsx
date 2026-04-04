@@ -22,7 +22,7 @@ export default function BillingPage() {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [discount, setDiscount] = useState("");
     const [customerName, setCustomerName] = useState('');
-    const { data: dropDownData } = useDropDownData();
+    const { data: dropDownData , refetch: refetchDropDownData } = useDropDownData();
     const {
         data: billData,
         isCreating, createBill
@@ -30,6 +30,7 @@ export default function BillingPage() {
 
     const products: DropDownListData['products'] = dropDownData?.products || [];
     const billHistory = billData || [];
+    
     
     // products to include stock info
     const productsWithStock = useMemo(() => {
@@ -48,12 +49,12 @@ export default function BillingPage() {
             (product) =>
                 product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
         );
-    }, [searchTerm]);
+    }, [productsWithStock, searchTerm]);
 
 
     const addToCart = (product: typeof productsWithStock[0]) => {
         const existingItem = cart.find((item) => item.productId === product.id);
-        const availableStock = product.stock;
+        const availableStock = dropDownData?.products?.find((p) => p.id === product.id)?.stock || 0;
 
         // Check stock before adding
         if (existingItem && existingItem.quantity >= availableStock || (!existingItem && availableStock <= 0)) {
@@ -113,19 +114,23 @@ export default function BillingPage() {
     };
 
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const discountAmount = (subtotal * Number(discount)) / 100;
-    const total = subtotal - discountAmount;
+    const discountAmount = subtotal - Number(discount);
+    const total =  discountAmount;
 
     const handleGenerateBill = async () => {
         if (cart.length === 0) {
             alert('Cart is empty!');
             return;
         }
+        if (Number(discount) >= total) {
+            alert('Discount cannot be greater than or equal to the Total!');
+            return;
+        }
         try {
 
             const payload = {
                 customer_name: customerName,
-                discount: discountAmount,
+                discount: Number(discount),
                 items: cart.map((item) => ({
                     product: item.productId,
                     quantity: item.quantity,
@@ -136,7 +141,8 @@ export default function BillingPage() {
 
             console.log("Payload for bill creation:", payload); // Debugging line
             await createBill(payload).unwrap();
-
+            await refetchDropDownData();
+           
             toast.success('Bill generated successfully', { autoClose: 2000 });
             setCart([]);
             setDiscount("");
@@ -266,14 +272,14 @@ export default function BillingPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm text-muted-foreground mb-1.5">Discount (%)</label>
+                                <label className="block text-sm text-muted-foreground mb-1.5">Discount</label>
                                 <input
                                     type="number"
                                     min="0"
                                     max="100"
                                     value={discount}
                                     onChange={(e) => {
-                                        const value = Math.min(100, Math.max(0, Number(e.target.value)));
+                                        const value =  Number(e.target.value);
                                         setDiscount(value.toString());
                                     }
                                     }
@@ -288,8 +294,8 @@ export default function BillingPage() {
                                 <span>₹{subtotal.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Discount ({discount}%)</span>
-                                <span className="text-destructive">- ₹{discountAmount.toLocaleString()}</span>
+                                <span className="text-muted-foreground">Discount </span>
+                                <span className="text-destructive">- ₹{discount.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between pt-2 border-t border-border">
                                 <span>Total</span>
@@ -328,7 +334,7 @@ export default function BillingPage() {
                                 <th className="px-4 py-3 text-left text-sm text-muted-foreground">Invoice Num</th>
                                 <th className="px-4 py-3 text-left text-sm text-muted-foreground">Date</th>
                                 <th className="px-4 py-3 text-left text-sm text-muted-foreground">Customer</th>
-                                <th className="px-4 py-3 text-left text-sm text-muted-foreground">Net Amount</th>
+                                <th className="px-4 py-3 text-left text-sm text-muted-foreground">Rate</th>
                                 <th className="px-4 py-3 text-left text-sm text-muted-foreground">Amount</th>
                                 <th className="px-4 py-3 text-left text-sm text-muted-foreground">Actions</th>
                             </tr>
@@ -340,7 +346,7 @@ export default function BillingPage() {
                                     <td className="px-4 py-3.5 text-sm text-muted-foreground">{
                                         new Date(bill.created_at).toLocaleString()}</td>
                                     <td className="px-4 py-3.5">{bill.customer_name ? bill.customer_name : 'N/A'}</td>
-                                    <td className="px-4 py-3.5 text-center">{bill.net_amount}</td>
+                                    <td className="px-4 py-3.5">₹{bill.net_amount}</td>
                                     <td className="px-4 py-3.5">₹{bill.total_amount.toLocaleString()}</td>
                                     <td className="px-4 py-3.5">
                                         <button className="p-2 hover:bg-accent rounded-lg transition-colors">

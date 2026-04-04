@@ -91,6 +91,7 @@ export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailMo
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Vendor Name</th>
+                    {/* <th className="px-4 py-3 text-left text-sm text-muted-foreground">Retail price</th> */}
                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Cost</th>
                     <th className="px-4 py-3 text-left text-sm text-muted-foreground">Stock Supplied</th>
 
@@ -100,6 +101,7 @@ export function ProductDetailModal({ isOpen, onClose, product }: ProductDetailMo
                   {vendorProduts?.map((v) => (
                     <tr key={v.id} className="hover:bg-accent/50 transition-colors">
                       <td className="px-4 py-3.5">{v.vendor_detail?.name}</td>
+                     
                       <td className="px-4 py-3.5 text-sm text-muted-foreground">₹{v.cost}</td>
                       <td className="px-4 py-3.5 ">
                         <span

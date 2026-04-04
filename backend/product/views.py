@@ -105,7 +105,6 @@ class ProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     parser_classes = (MultiPartParser, FormParser)
     queryset = (
         Products.objects.filter(is_active=True)
-        .select_related("category")
         .prefetch_related("vendor_products")
         .order_by("-created_at")
     )

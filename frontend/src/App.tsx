@@ -7,8 +7,9 @@ import VendorsPage from './pages/VendorsPage';
 import ProductsPage from './pages/ProductsPage';
 import BillingPage from './pages/BillingPage';
 import SignInPage from './pages/SignInPage';
+import BillRecords from './pages/BillRecords';
 // import CategoryPage from './pages/CategoryPage';
-import { ProductReturnModal } from './components/inventory/ProductReturnModal';
+// import { ProductReturnModal } from './components/inventory/ProductReturnModal';
 import { AddEditVendorProduct } from './components/vendorProduct/AddEditVendorProduct';
 import { ProductStockAdjustmentModal } from './components/inventory/ProductStockAdjustmentModal';
 
@@ -71,8 +72,8 @@ export default function App() {
         return <VendorsPage />;
       case 'billing':
         return <BillingPage />;
-      // case 'categories':
-      //   return <CategoryPage />;
+      case 'billRecords':
+        return <BillRecords />;
       default:
         return <DashboardPage />;
     }
@@ -106,11 +107,11 @@ export default function App() {
       </div>
 
       {/* Global Product Return Modal */}
-      <ProductReturnModal
+      {/* <ProductReturnModal
         isOpen={showReturnModal}
         onClose={() => setShowReturnModal(false)}
 
-      />
+      /> */}
 
       {/* Global Add/Edit Vendor Product Modal */}
       <AddEditVendorProduct

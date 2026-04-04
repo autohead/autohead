@@ -24,7 +24,7 @@ export const productApiSlice = baseApi.injectEndpoints({
                 method: HttpMethod.POST,
                 body: product,
             }),
-            invalidatesTags: ["Product"],
+            invalidatesTags: ["Product", "Vendor", "DropDown"],
         }),
 
         // update Product
@@ -34,7 +34,7 @@ export const productApiSlice = baseApi.injectEndpoints({
                 method: HttpMethod.PATCH,
                 body: product,
             }),
-            invalidatesTags: ["Product"],
+            invalidatesTags: ["Product",  "DropDown"],
         }),
 
         // delete Product
@@ -43,7 +43,7 @@ export const productApiSlice = baseApi.injectEndpoints({
                 url: `/products/${id}/`,
                 method: HttpMethod.DELETE,
             }),
-            invalidatesTags: ["Product"],
+            invalidatesTags: ["Product", "DropDown"],
         }),
 
 

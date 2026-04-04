@@ -98,10 +98,13 @@ class ProductFormSerializer(serializers.Serializer):
         last_product = None
 
         for item in products_data:
+            # auto capitalize whole product Name
+            productName = item["product_name"].upper()
+            productCode = item["product_code"].upper()
             product, created = Products.objects.get_or_create(
-                product_code=item["product_code"],
+                product_code=productCode,
                 defaults={
-                    "product_name": item["product_name"],
+                    "product_name": productName,
                     "price": item["selling_price"],
                     "cost": item["cost"],
                 },
@@ -110,7 +113,7 @@ class ProductFormSerializer(serializers.Serializer):
             new_stock = item["stock"]
             old_stock = product.stock
             difference = new_stock - old_stock
-            product.stock += difference
+            product.stock = new_stock  + old_stock
 
             
             if not created:
