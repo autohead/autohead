@@ -1,6 +1,6 @@
 import { baseApi } from "./baseApiSlice";
 import { HttpMethod } from "../../constants";
-import type { VendorResponse, VendorListResponse, VendorFormData, VendorUpdateData,VendorPaginatedResponse  } from "../../types/vendor";
+import type { VendorResponse, VendorListResponse, VendorFormData,VendorPaginatedResponse  } from "../../types/vendor";
 
 
 export const vendorApiSlice = baseApi.injectEndpoints({
