@@ -141,7 +141,17 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
+
+if config("ENV") == "production":
+    DATABASES = {
+        "default": dj_database_url.parse(
+            config("SP_DATABASE_URL"),
+            conn_max_age=600, #Keeps DB connections open for reuse instead of opening a new one every request
+            ssl_require=True, #Forces Django to connect using SSL (HTTPS-like encryption for DB)
+        )
+    }
+else:
+    DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": config("DB_NAME"),
