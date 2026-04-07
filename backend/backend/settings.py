@@ -41,6 +41,7 @@ CORS_ORIGIN_ALLOW_ALL = False
 
 CSRF_TRUSTED_ORIGINS = [
     "https://autohead-iqy3.vercel.app",
+    "https://adm.autoheadknr.com",
 ]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
