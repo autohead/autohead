@@ -17,7 +17,6 @@ import os
 import dj_database_url
 
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -40,7 +39,9 @@ ALLOWED_HOSTS = [
 CORS_ORIGIN_ALLOW_ALL = False
 
 
-CSRF_TRUSTED_ORIGINS = [ "https://autohead-iqy3.vercel.app",]
+CSRF_TRUSTED_ORIGINS = [
+    "https://autohead-iqy3.vercel.app",
+]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -70,16 +71,14 @@ INSTALLED_APPS = [
     "bill",
     "productReturn",
     "dashboard",
-    
     # cloudinary
     "cloudinary",
     "cloudinary_storage",
-    
 ]
 
 
 REST_FRAMEWORK = {
-    "EXCEPTION_HANDLER": "utils.exceptions.custom_exception_handler", #custome Exception handler for response
+    "EXCEPTION_HANDLER": "utils.exceptions.custom_exception_handler",  # custome Exception handler for response
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
@@ -91,7 +90,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 import cloudinary
 
@@ -101,7 +100,7 @@ cloudinary.config(
     api_secret=config("CLOUDINARY_API_SECRET"),
 )
 
-MEDIA_URL = '/media/'
+MEDIA_URL = "/media/"
 # MEDIA_ROOT = BASE_DIR / 'media'
 
 
@@ -146,21 +145,23 @@ if config("ENV") == "production":
     DATABASES = {
         "default": dj_database_url.parse(
             config("SP_DATABASE_URL"),
-            conn_max_age=600, #Keeps DB connections open for reuse instead of opening a new one every request
-            ssl_require=True, #Forces Django to connect using SSL (HTTPS-like encryption for DB)
+            conn_max_age=600,  # Keeps DB connections open for reuse instead of opening a new one every request
+            ssl_require=True,  # Forces Django to connect using SSL (HTTPS-like encryption for DB)
         )
     }
 else:
     DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST"),
-        "PORT": config("DB_PORT"),
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("DB_NAME"),
+            "USER": config("DB_USER"),
+            "PASSWORD": config("DB_PASSWORD"),
+            "HOST": config("DB_HOST"),
+            "PORT": config("DB_PORT"),
+        }
     }
-}
+
+    print("DB URL:", config("SP_DATABASE_URL"))
 
 # DATABASES = {
 #     "default": dj_database_url.parse(
@@ -193,7 +194,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'Asia/Kolkata'
+TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
 
@@ -204,7 +205,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
@@ -240,15 +241,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
     },
 }
