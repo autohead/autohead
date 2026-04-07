@@ -88,17 +88,17 @@ export function AddEditProductModal({ isOpen, onClose, onSave, mode, products, i
   const [errors, setErrors] = useState<Record<string, string>>({});
 
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-    console.log(name, value);
-  };
+  // const handleChange = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  // ) => {
+  //   const { name, value } = e.target;
+  //   setFormData((prev) => ({ ...prev, [name]: value }));
+  //   // Clear error when user starts typing
+  //   if (errors[name]) {
+  //     setErrors((prev) => ({ ...prev, [name]: '' }));
+  //   }
+  //   console.log(name, value);
+  // };
 
   // Handle change for dynamic rows
   const handleRowChange = (
