@@ -1,6 +1,6 @@
 
 import type{ Product, Vendor } from "./product";
-import type {VendorProduct} from "./vendorProduct";
+// import type {VendorProduct} from "./vendorProduct";
 
 type ProductBasic = Pick<Product, 'id' | 'product_name' | 'product_code' | 'cost' | 'price' | 'stock'>;
 // type VendorProductBasic = Pick<VendorProduct, 'id' | 'vendor' | 'stock' | 'product' | 'vendor_detail' | 'price'>;

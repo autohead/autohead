@@ -1,4 +1,4 @@
-import { X, Printer, Download } from 'lucide-react';
+import { Printer, Download } from 'lucide-react';
 import { Modal } from '../Modal';
 
 interface BillItem {

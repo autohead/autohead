@@ -8,10 +8,8 @@ import ProductsPage from './pages/ProductsPage';
 import BillingPage from './pages/BillingPage';
 import SignInPage from './pages/SignInPage';
 import BillRecords from './pages/BillRecords';
-// import CategoryPage from './pages/CategoryPage';
-// import { ProductReturnModal } from './components/inventory/ProductReturnModal';
-import { AddEditVendorProduct } from './components/vendorProduct/AddEditVendorProduct';
-import { ProductStockAdjustmentModal } from './components/inventory/ProductStockAdjustmentModal';
+// import { AddEditVendorProduct } from './components/vendorProduct/AddEditVendorProduct';
+// import { ProductStockAdjustmentModal } from './components/inventory/ProductStockAdjustmentModal';
 
 
 import { ToastContainer } from 'react-toastify';
@@ -27,9 +25,8 @@ export default function App() {
 
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showReturnModal, setShowReturnModal] = useState(false);
-  const [showStockModal, setShowStockModal] = useState(false);
-  const [showAddVendorProductModal, setShowAddVendorProductModal] = useState(false);
+  // const [showStockModal, setShowStockModal] = useState(false);
+  // const [showAddVendorProductModal, setShowAddVendorProductModal] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -114,20 +111,20 @@ export default function App() {
       /> */}
 
       {/* Global Add/Edit Vendor Product Modal */}
-      <AddEditVendorProduct
+      {/* <AddEditVendorProduct
         isOpen={showAddVendorProductModal}
         onClose={() => setShowAddVendorProductModal(false)}
         mode="add"
         // onSave={() => {}}
         // isSaving={false}
-      />
+      /> */}
 
       {/* Global Product Stock Adjustment Modal */}
-      <ProductStockAdjustmentModal
+      {/* <ProductStockAdjustmentModal
         isOpen={showStockModal}
         onClose={() => setShowStockModal(false)}
 
-      />
+      /> */}
     </div>
   );
 }
