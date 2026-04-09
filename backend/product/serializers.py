@@ -2,7 +2,6 @@ from rest_framework import serializers
 from .models import Products, VendorProducts
 from vendors.models import Vendors
 from django.db import transaction
-import traceback
 
 
 # Lightweight serializers used for nested read-only representation.
@@ -88,16 +87,15 @@ class ProductFormSerializer(serializers.Serializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        try:
-            vendor = None
-            products_data = validated_data.pop("product_data", [])
-            vendor_data = validated_data.pop("vendor_data", None)
+        vendor = None
+        products_data = validated_data.pop("product_data", [])
+        vendor_data = validated_data.pop("vendor_data", None)
 
-            # check and create vendor if not exists
-            # if vendor_data:
-            #     vendor, _ = Vendors.objects.get_or_create(**vendor_data)
-            
-            if vendor_data:
+        # check and create vendor if not exists
+        # if vendor_data:
+        #     vendor, _ = Vendors.objects.get_or_create(**vendor_data)
+        
+        if vendor_data:
                 phone = vendor_data.get("phone")
                 name = vendor_data.get("name")
 
@@ -105,49 +103,41 @@ class ProductFormSerializer(serializers.Serializer):
                     phone=phone,
                     defaults={"name": name}
                 )
-                
-            last_product = None
-
-            for item in products_data:
-                # auto capitalize whole product Name
-                productName = item["product_name"].upper()
-                productCode = item["product_code"].upper()
-                product, created = Products.objects.get_or_create(
-                    product_code=productCode,
-                    defaults={
-                        "product_name": productName,
-                        "price": item["selling_price"],
-                        "cost": item["cost"],
-                    },
-                )
-
-                new_stock = item["stock"]
-                old_stock = product.stock
-                difference = new_stock - old_stock
-                product.stock = new_stock  + old_stock
-
-                
-                if not created:
-                    product.price = item["selling_price"]
-                    product.cost = item["cost"]
-                product.save()
-
-                if vendor and difference > 0:
-                    VendorProducts.objects.update_or_create(
-                        vendor=vendor,
-                        product=product,
-                        defaults={"stock_supplied": new_stock, "cost": item["cost"]},
-                    )
-                last_product = product
-            return last_product
-        except Exception as e:
-            print("ERROR:", str(e))  # for logs (if visible)
-            raise serializers.ValidationError({
-                "error": str(e),
-                "trace": traceback.format_exc()
-            })
             
-       
+        last_product = None
+
+        for item in products_data:
+            # auto capitalize whole product Name
+            productName = item["product_name"].upper()
+            productCode = item["product_code"].upper()
+            product, created = Products.objects.get_or_create(
+                product_code=productCode,
+                defaults={
+                    "product_name": productName,
+                    "price": item["selling_price"],
+                    "cost": item["cost"],
+                },
+            )
+
+            new_stock = item["stock"]
+            old_stock = product.stock
+            difference = new_stock - old_stock
+            product.stock = new_stock  + old_stock
+
+            
+            if not created:
+                product.price = item["selling_price"]
+                product.cost = item["cost"]
+            product.save()
+
+            if vendor and difference > 0:
+                VendorProducts.objects.update_or_create(
+                    vendor=vendor,
+                    product=product,
+                    defaults={"stock_supplied": new_stock, "cost": item["cost"]},
+                )
+            last_product = product
+        return last_product
 
 
 # Serializer for VendorProducts used in product forms (create/update)
