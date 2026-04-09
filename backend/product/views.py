@@ -126,6 +126,13 @@ class ProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return custom_response(data=None, method=method, data_name="Product")
 
 
+class DeleteAllProductsView(generics.GenericAPIView):
+    # permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        Products.objects.all().delete()
+        return custom_response(data=None, method="DELETE", data_name="Products")
+
 # View for listing products and vendors for dropdowns.
 class DropdownDataList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
