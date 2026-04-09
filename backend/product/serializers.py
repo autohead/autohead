@@ -93,7 +93,10 @@ class ProductFormSerializer(serializers.Serializer):
 
         # check and create vendor if not exists
         if vendor_data:
-            vendor, _ = Vendors.objects.get_or_create(**vendor_data)
+            vendor, _ = Vendors.objects.get_or_create(
+                phone=vendor_data.get("phone"),
+                defaults=vendor_data
+        )
             
         last_product = None
 
