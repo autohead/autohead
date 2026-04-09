@@ -21,7 +21,7 @@ class VendorsListCreateView(generics.ListCreateAPIView):
     queryset = Vendors.objects.filter(is_active=True).order_by('-created_at').all()
     serializer_class = VendorSerializer
     pagination_class = VendorsPagination
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     
     
     def list(self, request, *args, **kwargs):
@@ -82,3 +82,10 @@ class VendorsUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         instance.save(update_fields=['is_active'])
         method = 'DEACTIVATE' if instance.is_active else 'REACTIVATE'
         return custom_response(data=None, method=method, data_name='Vendor')
+    
+class DeleteAllVendorsView(generics.GenericAPIView):
+    # permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        Vendors.objects.all().delete()
+        return custom_response(data=None, method="DELETE", data_name="Vendors")

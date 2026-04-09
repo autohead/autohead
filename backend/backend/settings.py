@@ -163,13 +163,6 @@ else:
         }
     }
 
-    print("DB URL:", config("SP_DATABASE_URL"))
-
-# DATABASES = {
-#     "default": dj_database_url.parse(
-#        config("DATABASE_URL")
-#     )
-# }
 
 
 # Password validation
