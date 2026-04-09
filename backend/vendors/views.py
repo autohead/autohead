@@ -21,7 +21,7 @@ class VendorsListCreateView(generics.ListCreateAPIView):
     queryset = Vendors.objects.filter(is_active=True).order_by('-created_at').all()
     serializer_class = VendorSerializer
     pagination_class = VendorsPagination
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     
     
     def list(self, request, *args, **kwargs):
