@@ -139,7 +139,7 @@ export default function BillingPage() {
             };
 
 
-            console.log("Payload for bill creation:", payload); // Debugging line
+            // console.log("Payload for bill creation:", payload); // Debugging line
             await createBill(payload).unwrap();
             await refetchDropDownData();
            

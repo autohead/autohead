@@ -34,7 +34,7 @@ export default function InvoicePage() {
     const downloadInvoice = location.state?.downloadInvoice || false;
 
     const { data: invoiceData, isLoading, isError } = useDownloadInvoice(String(id));
-    console.log("Invoice Data:", invoiceData);
+    // console.log("Invoice Data:", invoiceData);
 
 
     isLoading && <IsLoadingDisplay />;
