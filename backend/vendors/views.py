@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 logger = logging.getLogger(__name__)
 
 class VendorsPagination(PageNumberPagination):
-    page_size = 6
+    page_size = 100
     page_size_query_param = 'page_size'
     max_page_size = 1000
     
@@ -84,7 +84,7 @@ class VendorsUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return custom_response(data=None, method=method, data_name='Vendor')
     
 class DeleteAllVendorsView(generics.GenericAPIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
         Vendors.objects.all().delete()

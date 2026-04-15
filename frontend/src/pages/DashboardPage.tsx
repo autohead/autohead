@@ -198,21 +198,23 @@ export default function DashboardPage() {
                                         <p className="text-sm text-muted-foreground text-center">No Low stock  found.</p>
                                     </div>
                                 )
-                            }
-                            {stockAlerts.map((alert, index) => (
-                                <div key={index} className="p-4 hover:bg-accent/50 transition-colors">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm truncate">{alert.product_name}</p>
-                                            <p className="text-sm text-muted-foreground mt-1">SKU: {alert.product_code}</p>
-                                        </div>
-                                        <div className="text-right flex-shrink-0">
-                                            <p className="text-sm text-amber-600">{alert.stock} units</p>
-                                            <p className="text-xs text-muted-foreground mt-1">Min: 5</p>
+                            }<div className="max-h-105 overflow-y-auto">
+                                {stockAlerts.map((alert, index) => (
+                                    <div key={index} className="p-4 hover:bg-accent/50 transition-colors">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm truncate">{alert.product_name}</p>
+                                                <p className="text-sm text-muted-foreground mt-1">SKU: {alert.product_code}</p>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className="text-sm text-amber-600">{alert.stock} units</p>
+                                                <p className="text-xs text-muted-foreground mt-1">Min: 5</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+
                         </div>
                     </div>
                 </div>

@@ -187,3 +187,27 @@ html {
   font-size: var(--font-size);
 }
 
+
+
+/*  */
+/* .pdf-mode * {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #d1d5db !important;
+}
+
+.pdf-mode .pdf-header {
+  display: block !important;
+}
+
+.pdf-mode .pdf-header-top {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+}
+
+.pdf-mode .pdf-header-bottom {
+  display: flex !important;
+  justify-content: space-between !important;
+} */
+

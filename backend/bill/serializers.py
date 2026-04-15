@@ -5,7 +5,10 @@ from django.db import transaction
 from decimal import Decimal
 
 
+
+
 class BillItemSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = BillItem
         fields = ["id", "bill", "product", "quantity", "selling_price"]
@@ -91,3 +94,33 @@ class BillFormSerializer(serializers.ModelSerializer):
             BillItem.objects.bulk_create(bill_items)
 
         return bill
+    
+    
+    
+class BillItemReadSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.product_name', read_only=True)
+    product_code = serializers.CharField(source='product.product_code', read_only=True)
+
+    class Meta:
+        model = BillItem
+        fields = ["id", "bill", "product", "product_name", "product_code", "quantity", "selling_price"]
+        read_only_fields = ["id", "created_at", "updated_at", "bill"]
+        
+        
+class BillReadSerializer(serializers.ModelSerializer):
+    items = BillItemReadSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Bill
+        fields = [
+            "id",
+            "invoice_no",
+            "customer_name",
+            "net_amount",
+            "discount",
+            "total_amount",
+            "items",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "invoice_no", "created_at", "updated_at"]

@@ -1,222 +1,28 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, ArrowUpDown, ChevronLeft, ChevronRight, Receipt, Eye } from 'lucide-react';
 import { BillDetailModal } from '../components/bills/BillDetialsModal';
+import IsLoadingDisplay from '../components/common/IsLoadingDisplay';
+import IsErrorDisplay from '../components/common/IsErrorDisplay';
+import { useBillingAllData } from '../hooks/billing';
+import type { BillAllListData } from '../types/billing';
+import { formatTime, formatDate } from '../utils/datetimeUtils';
 
-interface BillRecord {
-  id: number;
-  billNumber: string;
-  customerName: string;
-  productName: string;
-  quantity: number;
-  price: number;
-  totalPrice: number;
-  discountRate: number;
-  finalAmount: number;
-  date: string;
-  time: string;
+
+// ✅ Delay search API call until user stops typing for a short time (e.g., 500ms)
+function useDebounce(value: string, delay: number) {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debounced;
 }
-
-// Mock data for bill records
-const mockBillRecords: BillRecord[] = [
-  {
-    id: 1,
-    billNumber: '#1234',
-    customerName: 'John Doe',
-    productName: 'Premium Floor Mats',
-    quantity: 2,
-    price: 1200,
-    totalPrice: 2400,
-    discountRate: 10,
-    finalAmount: 2160,
-    date: '2024-12-10',
-    time: '10:30 AM',
-  },
-  {
-    id: 2,
-    billNumber: '#1234',
-    customerName: 'John Doe',
-    productName: 'LED Headlight Kit',
-    quantity: 1,
-    price: 3500,
-    totalPrice: 3500,
-    discountRate: 10,
-    finalAmount: 3150,
-    date: '2024-12-10',
-    time: '10:30 AM',
-  },
-  {
-    id: 3,
-    billNumber: '#1233',
-    customerName: 'Sarah Smith',
-    productName: 'Car Cover Waterproof',
-    quantity: 2,
-    price: 1800,
-    totalPrice: 3600,
-    discountRate: 5,
-    finalAmount: 3420,
-    date: '2024-12-10',
-    time: '11:15 AM',
-  },
-  {
-    id: 4,
-    billNumber: '#1232',
-    customerName: 'Mike Johnson',
-    productName: 'Phone Mount Magnetic',
-    quantity: 5,
-    price: 750,
-    totalPrice: 3750,
-    discountRate: 0,
-    finalAmount: 3750,
-    date: '2024-12-09',
-    time: '02:45 PM',
-  },
-  {
-    id: 5,
-    billNumber: '#1232',
-    customerName: 'Mike Johnson',
-    productName: 'Dash Camera HD',
-    quantity: 2,
-    price: 4500,
-    totalPrice: 9000,
-    discountRate: 0,
-    finalAmount: 9000,
-    date: '2024-12-09',
-    time: '02:45 PM',
-  },
-  {
-    id: 6,
-    billNumber: '#1231',
-    customerName: 'Emily Davis',
-    productName: 'Seat Covers Leather',
-    quantity: 1,
-    price: 6500,
-    totalPrice: 6500,
-    discountRate: 15,
-    finalAmount: 5525,
-    date: '2024-12-09',
-    time: '04:20 PM',
-  },
-  {
-    id: 7,
-    billNumber: '#1230',
-    customerName: 'Robert Brown',
-    productName: 'Tire Pressure Monitor',
-    quantity: 3,
-    price: 2500,
-    totalPrice: 7500,
-    discountRate: 5,
-    finalAmount: 7125,
-    date: '2024-12-08',
-    time: '09:30 AM',
-  },
-  {
-    id: 8,
-    billNumber: '#1230',
-    customerName: 'Robert Brown',
-    productName: 'Steering Wheel Cover',
-    quantity: 4,
-    price: 550,
-    totalPrice: 2200,
-    discountRate: 5,
-    finalAmount: 2090,
-    date: '2024-12-08',
-    time: '09:30 AM',
-  },
-  {
-    id: 9,
-    billNumber: '#1229',
-    customerName: 'Lisa Anderson',
-    productName: 'Premium Floor Mats',
-    quantity: 1,
-    price: 1200,
-    totalPrice: 1200,
-    discountRate: 0,
-    finalAmount: 1200,
-    date: '2024-12-08',
-    time: '11:00 AM',
-  },
-  {
-    id: 10,
-    billNumber: '#1228',
-    customerName: 'David Wilson',
-    productName: 'LED Headlight Kit',
-    quantity: 2,
-    price: 3500,
-    totalPrice: 7000,
-    discountRate: 10,
-    finalAmount: 6300,
-    date: '2024-12-07',
-    time: '03:15 PM',
-  },
-  {
-    id: 11,
-    billNumber: '#1227',
-    customerName: 'Jennifer Taylor',
-    productName: 'Dash Camera HD',
-    quantity: 1,
-    price: 4500,
-    totalPrice: 4500,
-    discountRate: 5,
-    finalAmount: 4275,
-    date: '2024-12-07',
-    time: '05:40 PM',
-  },
-  {
-    id: 12,
-    billNumber: '#1226',
-    customerName: 'Michael Clark',
-    productName: 'Car Cover Waterproof',
-    quantity: 3,
-    price: 1800,
-    totalPrice: 5400,
-    discountRate: 12,
-    finalAmount: 4752,
-    date: '2024-12-06',
-    time: '10:20 AM',
-  },
-  {
-    id: 13,
-    billNumber: '#1225',
-    customerName: 'Amanda Martinez',
-    productName: 'Phone Mount Magnetic',
-    quantity: 2,
-    price: 750,
-    totalPrice: 1500,
-    discountRate: 0,
-    finalAmount: 1500,
-    date: '2024-12-06',
-    time: '01:30 PM',
-  },
-  {
-    id: 14,
-    billNumber: '#1224',
-    customerName: 'Christopher Lee',
-    productName: 'Seat Covers Leather',
-    quantity: 2,
-    price: 6500,
-    totalPrice: 13000,
-    discountRate: 20,
-    finalAmount: 10400,
-    date: '2024-12-05',
-    time: '09:00 AM',
-  },
-  {
-    id: 15,
-    billNumber: '#1223',
-    customerName: 'Patricia Harris',
-    productName: 'Tire Pressure Monitor',
-    quantity: 1,
-    price: 2500,
-    totalPrice: 2500,
-    discountRate: 5,
-    finalAmount: 2375,
-    date: '2024-12-05',
-    time: '12:45 PM',
-  },
-];
 
 type SortField = 'date' | 'finalAmount' | 'customerName';
 type SortDirection = 'asc' | 'desc';
+
 
 export default function BillRecords() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -224,112 +30,106 @@ export default function BillRecords() {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedBillNumber, setSelectedBillNumber] = useState<string | null>(null);
-  const itemsPerPage = 10;
 
-  // Group records by bill number
+  const debouncedSearch = useDebounce(searchTerm, 500);
+
+
+  // ✅ API call
+  const { data, isLoading, isError } = useBillingAllData({
+    page: currentPage,
+    page_size: 10,
+    search: debouncedSearch,
+  });
+
+
+  const bills = data?.billing_data ?? [];
+  const totalPages = data?.total_pages ?? 1;
+  const totalCount = data?.count ?? 0;
+
+
+
+  // ✅ Group items (keep this if API returns split items)
   const billGroups = useMemo(() => {
-    const groups = new Map<string, BillRecord[]>();
-    mockBillRecords.forEach((record) => {
-      if (!groups.has(record.billNumber)) {
-        groups.set(record.billNumber, []);
+    const groups = new Map<string, BillAllListData[]>();
+    bills.forEach((record) => {
+      if (!groups.has(record.invoice_no)) {
+        groups.set(record.invoice_no, []);
       }
-      groups.get(record.billNumber)!.push(record);
+      groups.get(record.invoice_no)!.push(record);
     });
     return groups;
-  }, []);
+  }, [bills]);
 
-  // Get unique bills for display
-  const uniqueBills = useMemo(() => {
-    const bills = new Map<string, BillRecord>();
-    mockBillRecords.forEach((record) => {
-      if (!bills.has(record.billNumber)) {
-        bills.set(record.billNumber, record);
-      }
-    });
-    return Array.from(bills.values());
-  }, []);
 
   // Filter and sort records
   const filteredAndSortedRecords = useMemo(() => {
-    let filtered = uniqueBills.filter((record) =>
-      record.customerName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    let filtered = Array.from(billGroups.values()).map(group => group[0]);
 
-    // Sort records
+    if (searchTerm) {
+      filtered = filtered.filter((record) =>
+        record.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
     filtered.sort((a, b) => {
       let comparison = 0;
-      
+
       if (sortField === 'date') {
-        const dateA = new Date(`${a.date} ${a.time}`).getTime();
-        const dateB = new Date(`${b.date} ${b.time}`).getTime();
-        comparison = dateA - dateB;
+        comparison =
+          new Date(a.created_at).getTime() -
+          new Date(b.created_at).getTime();
       } else if (sortField === 'finalAmount') {
-        comparison = a.finalAmount - b.finalAmount;
+        comparison = a.total_amount - b.total_amount;
       } else if (sortField === 'customerName') {
-        comparison = a.customerName.localeCompare(b.customerName);
+        comparison = a.customer_name.localeCompare(b.customer_name);
       }
 
       return sortDirection === 'asc' ? comparison : -comparison;
     });
 
     return filtered;
-  }, [searchTerm, sortField, sortDirection]);
+  }, [billGroups, searchTerm, sortField, sortDirection]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredAndSortedRecords.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentRecords = filteredAndSortedRecords.slice(startIndex, endIndex);
+  if (isLoading) return <IsLoadingDisplay />;
+  if (isError) return <IsErrorDisplay type="bills" />;
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortField(field);
-      setSortDirection('desc');
+      setSortField(field); setSortDirection('desc');
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
-  const handleViewBill = (billNumber: string) => {
-    setSelectedBillNumber(billNumber);
-  };
-
+  // modal data
   const getSelectedBillData = () => {
     if (!selectedBillNumber) return null;
-    
-    const billItems = billGroups.get(selectedBillNumber);
-    if (!billItems || billItems.length === 0) return null;
 
-    const firstItem = billItems[0];
+    const billItems = billGroups.get(selectedBillNumber);
+    if (!billItems) return null;
+
+    const first = billItems[0];
+
     return {
-      billNumber: selectedBillNumber,
-      customerName: firstItem.customerName,
-      date: firstItem.date,
-      time: firstItem.time,
-      items: billItems.map((item) => ({
-        productName: item.productName,
-        quantity: item.quantity,
-        price: item.price,
-        totalPrice: item.totalPrice,
-      })),
-      discountRate: firstItem.discountRate,
+      invoice_no: selectedBillNumber,
+      customer_name: first.customer_name,
+      created_at: first.created_at,
+      items: billItems.flatMap((item) =>
+        item.items.map((sub) => ({
+          product_name: sub.product_name,
+          quantity: sub.quantity,
+          selling_price: sub.selling_price,
+        }))
+      ),
+      total_amount: first.total_amount,
+      discount: first.discount,
+      net_amount: first.net_amount,
     };
   };
 
   const selectedBill = getSelectedBillData();
 
-  // Calculate total items and total amount for each bill
-  const getBillSummary = (billNumber: string) => {
-    const items = billGroups.get(billNumber) || [];
-    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-    const totalAmount = items.reduce((sum, item) => sum + item.finalAmount, 0);
-    return { totalItems, totalAmount };
-  };
 
   return (
     <div className="p-4 lg:p-6">
@@ -366,22 +166,20 @@ export default function BillRecords() {
           <div className="flex gap-2">
             <button
               onClick={() => handleSort('date')}
-              className={`px-4 py-2.5 rounded-lg border transition-colors flex items-center gap-2 ${
-                sortField === 'date'
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background border-border hover:bg-accent'
-              }`}
+              className={`px-4 py-2.5 rounded-lg border transition-colors flex items-center gap-2 ${sortField === 'date'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background border-border hover:bg-accent'
+                }`}
             >
               Date
               <ArrowUpDown className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleSort('finalAmount')}
-              className={`px-4 py-2.5 rounded-lg border transition-colors flex items-center gap-2 ${
-                sortField === 'finalAmount'
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background border-border hover:bg-accent'
-              }`}
+              className={`px-4 py-2.5 rounded-lg border transition-colors flex items-center gap-2 ${sortField === 'finalAmount'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background border-border hover:bg-accent'
+                }`}
             >
               Amount
               <ArrowUpDown className="w-4 h-4" />
@@ -392,8 +190,7 @@ export default function BillRecords() {
         {/* Results count */}
         <div className="mt-4 pt-4 border-t border-border">
           <p className="text-sm text-muted-foreground">
-            Showing {startIndex + 1} - {Math.min(endIndex, filteredAndSortedRecords.length)} of{' '}
-            {filteredAndSortedRecords.length} records
+            Showing page {currentPage} of {totalPages} ({totalCount} total records)
           </p>
         </div>
       </div>
@@ -407,7 +204,7 @@ export default function BillRecords() {
                 <th className="px-4 py-3 text-left">Bill #</th>
                 <th className="px-4 py-3 text-left">Customer Name</th>
                 <th className="px-4 py-3 text-center">Total Items</th>
-                <th className="px-4 py-3 text-right">Discount %</th>
+                <th className="px-4 py-3 text-right">Discount</th>
                 <th className="px-4 py-3 text-right">Bill Amount</th>
                 <th className="px-4 py-3 text-center">Date</th>
                 <th className="px-4 py-3 text-center">Time</th>
@@ -415,37 +212,35 @@ export default function BillRecords() {
               </tr>
             </thead>
             <tbody>
-              {currentRecords.map((record, index) => {
-                const { totalItems, totalAmount } = getBillSummary(record.billNumber);
+              {filteredAndSortedRecords.map((record, index) => {
                 return (
                   <tr
                     key={record.id}
-                    className={`border-b border-border last:border-0 transition-colors hover:bg-accent/50 ${
-                      index % 2 === 0 ? 'bg-card' : 'bg-muted/20'
-                    }`}
+                    className={`border-b border-border last:border-0 transition-colors hover:bg-accent/50 ${index % 2 === 0 ? 'bg-card' : 'bg-muted/20'
+                      }`}
                   >
                     <td className="px-4 py-3">
-                      <span className="text-primary">{record.billNumber}</span>
+                      <span className="text-primary">{record.invoice_no}</span>
                     </td>
-                    <td className="px-4 py-3">{record.customerName}</td>
-                    <td className="px-4 py-3 text-center">{totalItems}</td>
+                    <td className="px-4 py-3">{record.customer_name}</td>
+                    <td className="px-4 py-3 text-center">{record.items.length}</td>
                     <td className="px-4 py-3 text-right">
-                      {record.discountRate > 0 ? (
-                        <span className="text-green-600">{record.discountRate}%</span>
+                      {record.discount > 0 ? (
+                        <span className="text-green-600">{record.discount}</span>
                       ) : (
-                        <span className="text-muted-foreground">-</span>
+                        <span className="text-muted-foreground">0</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-primary">₹{totalAmount.toLocaleString()}</span>
+                      <span className="text-primary">₹{record.total_amount}</span>
                     </td>
-                    <td className="px-4 py-3 text-center text-sm">{record.date}</td>
+                    <td className="px-4 py-3 text-center text-sm">{formatDate(record.created_at)}</td>
                     <td className="px-4 py-3 text-center text-sm text-muted-foreground">
-                      {record.time}
+                      {formatTime(record.created_at)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button
-                        onClick={() => handleViewBill(record.billNumber)}
+                        onClick={() => setSelectedBillNumber(record.invoice_no)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
                       >
                         <Eye className="w-4 h-4" />
@@ -458,7 +253,7 @@ export default function BillRecords() {
             </tbody>
           </table>
 
-          {currentRecords.length === 0 && (
+          {filteredAndSortedRecords.length === 0 && (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No bill records found</p>
             </div>
@@ -468,8 +263,7 @@ export default function BillRecords() {
 
       {/* Mobile: Card View */}
       <div className="lg:hidden space-y-4">
-        {currentRecords.map((record) => {
-          const { totalItems, totalAmount } = getBillSummary(record.billNumber);
+        {filteredAndSortedRecords.map((record) => {
           return (
             <div
               key={record.id}
@@ -477,36 +271,36 @@ export default function BillRecords() {
             >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="text-primary">{record.billNumber}</p>
+                  <p className="text-primary">{record.invoice_no}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {record.date} • {record.time}
+                    {record.created_at} • {record.created_at.split('T')[1].split('.')[0]}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">Total Amount</p>
-                  <p className="text-primary">₹{totalAmount.toLocaleString()}</p>
+                  <p className="text-primary">₹{record.total_amount.toLocaleString()}</p>
                 </div>
               </div>
 
               <div className="space-y-2 border-t border-border pt-3 mb-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Customer:</span>
-                  <span className="text-sm">{record.customerName}</span>
+                  <span className="text-sm">{record.customer_name}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Total Items:</span>
-                  <span className="text-sm">{totalItems}</span>
+                  <span className="text-sm">{record.items.length}</span>
                 </div>
-                {record.discountRate > 0 && (
+                {record.discount > 0 && (
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Discount:</span>
-                    <span className="text-sm text-green-600">{record.discountRate}%</span>
+                    <span className="text-sm text-green-600">{record.discount}%</span>
                   </div>
                 )}
               </div>
 
               <button
-                onClick={() => handleViewBill(record.billNumber)}
+                onClick={() => setSelectedBillNumber(record.invoice_no)}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
               >
                 <Eye className="w-4 h-4" />
@@ -516,7 +310,7 @@ export default function BillRecords() {
           );
         })}
 
-        {currentRecords.length === 0 && (
+        {filteredAndSortedRecords.length === 0 && (
           <div className="bg-card rounded-xl p-8 border border-border text-center">
             <p className="text-muted-foreground">No bill records found</p>
           </div>
@@ -525,72 +319,39 @@ export default function BillRecords() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
+        <div className="flex justify-center gap-2 mt-6">
           <button
-            onClick={() => handlePageChange(currentPage - 1)}
+            onClick={() => setCurrentPage((p) => p - 1)}
             disabled={currentPage === 1}
-            className="p-2 rounded-lg border border-border hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft />
           </button>
 
-          <div className="flex gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-              // Show first page, last page, current page, and pages around current
-              const showPage =
-                page === 1 ||
-                page === totalPages ||
-                (page >= currentPage - 1 && page <= currentPage + 1);
-
-              if (!showPage) {
-                // Show ellipsis
-                if (page === currentPage - 2 || page === currentPage + 2) {
-                  return (
-                    <span key={page} className="px-3 py-2 text-muted-foreground">
-                      ...
-                    </span>
-                  );
-                }
-                return null;
-              }
-
-              return (
-                <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
-                    currentPage === page
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'border-border hover:bg-accent'
-                  }`}
-                >
-                  {page}
-                </button>
-              );
-            })}
-          </div>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentPage(i + 1)}
+              className={currentPage === i + 1 ? 'font-bold' : ''}
+            >
+              {i + 1}
+            </button>
+          ))}
 
           <button
-            onClick={() => handlePageChange(currentPage + 1)}
+            onClick={() => setCurrentPage((p) => p + 1)}
             disabled={currentPage === totalPages}
-            className="p-2 rounded-lg border border-border hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight />
           </button>
         </div>
       )}
-      
+
       {/* Bill Detail Modal */}
       {selectedBill && (
         <BillDetailModal
           isOpen={!!selectedBillNumber}
           onClose={() => setSelectedBillNumber(null)}
-          billNumber={selectedBill.billNumber}
-          customerName={selectedBill.customerName}
-          date={selectedBill.date}
-          time={selectedBill.time}
-          items={selectedBill.items}
-          discountRate={selectedBill.discountRate}
+          billData={selectedBill}
         />
       )}
     </div>

@@ -10,9 +10,7 @@ from .serializers import (
     ProductSalesAnalysisSerializer,
     ProductSerializer,
     ProductFormSerializer,
-    VendorBriefSerializer,
     ProductBriefSerializer,
-    VendorProductBriefSerializer,
     VendorProductFormSerializer,
     VendorProductRead,
 )
@@ -21,12 +19,12 @@ from django.db.models import Sum
 from django.db import models
 from django.db.models.functions import Coalesce
 from vendors.models import Vendors
-from bill.models import Bill, BillItem
+from bill.models import BillItem
 
 
 # Create your views here.
 class ProductPagination(PageNumberPagination):
-    page_size = 6
+    page_size = 100
     page_size_query_param = "page_size"
     max_page_size = 100
 
@@ -39,7 +37,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
         )
         .order_by("-created_at")
     )
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     pagination_class = ProductPagination
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
@@ -93,7 +91,6 @@ class ProductListCreateView(generics.ListCreateAPIView):
         )
 
     def create(self, request, *args, **kwargs):
-        # print("Received data:", request.data)  # Debugging line to check incoming data
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -127,7 +124,7 @@ class ProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class DeleteAllProductsView(generics.GenericAPIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
         Products.objects.all().delete()
@@ -143,19 +140,10 @@ class DropdownDataList(generics.ListAPIView):
             Products.objects.filter(is_active=True), many=True
         ).data
 
-        # vendor_data = VendorBriefSerializer(
-        #     Vendors.objects.filter(is_active=True), many=True
-        # ).data
-
-        # vendor_products = VendorProductBriefSerializer(
-        #     VendorProducts.objects.filter(is_active=True), many=True
-        # ).data
 
         return custom_response(
             data={
                 "products": products,
-                # "vendors": vendor_data,
-                # "vendor_products": vendor_products,
             },
             method="GET",
             data_name="dropdown_data",

@@ -1,75 +1,79 @@
 import { Printer, Download } from 'lucide-react';
 import { Modal } from '../Modal';
+import { formatTime, formatDate } from '../../utils/datetimeUtils';
+import { useNavigate } from 'react-router-dom';
 
 interface BillItem {
-  productName: string;
-  quantity: number;
-  price: number;
-  totalPrice: number;
+  invoice_no: string;
+  customer_name: string;
+  created_at: string;
+  items: {
+    product_name: string;
+    quantity: number;
+    selling_price: number;
+  }[];
+  total_amount: number;
+  discount: number;
+  net_amount: number;
 }
 
 interface BillDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  billNumber: string;
-  customerName: string;
-  date: string;
-  time: string;
-  items: BillItem[];
-  discountRate: number;
+  billData: BillItem | null;
 }
 
 export function BillDetailModal({
   isOpen,
   onClose,
-  billNumber,
-  customerName,
-  date,
-  time,
-  items,
-  discountRate,
+  billData,
+
 }: BillDetailModalProps) {
-  const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-  const discountAmount = (subtotal * discountRate) / 100;
-  const finalTotal = subtotal - discountAmount;
+  const subtotal = billData?.net_amount || 0;
+  const discountAmount = billData?.discount || 0;
+  const grandTotal = billData?.total_amount || 0;
+
+  const navigate = useNavigate();
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownload = () => {
-    alert('Download feature - Coming soon!');
+  const handleDownload = (billData: BillItem) => {
+    navigate(`/invoice/${billData.invoice_no}`, {
+      state: { billData, downloadInvoice: true }
+    });
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Bill Details">
-      <div className="max-h-[70vh] overflow-y-auto">
+      <div className="">
         {/* Bill Header */}
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 mb-6 border border-primary/20">
           <div className="flex items-start justify-between mb-4">
             <div>
               <h2 className="text-primary mb-1">AutoHead Car Accessories</h2>
               <p className="text-sm text-muted-foreground">
-                123 Main Street, City, State 12345
+                Address: Chalad, Alavil, Kannur, Kerala - 670008
               </p>
               <p className="text-sm text-muted-foreground">
-                Phone: (555) 123-4567
+                Phone: +91 90488 80789
               </p>
             </div>
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Bill Number</p>
-              <p className="text-primary text-lg">{billNumber}</p>
+              <p className="text-primary text-lg">{billData?.invoice_no}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-primary/20">
             <div>
               <p className="text-sm text-muted-foreground">Customer Name</p>
-              <p>{customerName}</p>
+              <p>{billData?.customer_name}</p>
             </div>
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Date & Time</p>
-              <p>{date} • {time}</p>
+              <p>{formatDate(billData?.created_at || "")} • {formatTime(billData?.created_at || "")}</p>
             </div>
           </div>
         </div>
@@ -77,7 +81,7 @@ export function BillDetailModal({
         {/* Items Table */}
         <div className="mb-6">
           <h3 className="mb-3">Items</h3>
-          
+
           {/* Desktop View */}
           <div className="hidden md:block border border-border rounded-lg overflow-hidden">
             <table className="w-full">
@@ -90,17 +94,16 @@ export function BillDetailModal({
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, index) => (
+                {billData?.items.map((item, index) => (
                   <tr
                     key={index}
-                    className={`border-b border-border last:border-0 ${
-                      index % 2 === 0 ? 'bg-card' : 'bg-muted/20'
-                    }`}
+                    className={`border-b border-border last:border-0 ${index % 2 === 0 ? 'bg-card' : 'bg-muted/20'
+                      }`}
                   >
-                    <td className="px-4 py-3">{item.productName}</td>
+                    <td className="px-4 py-3">{item.product_name}</td>
                     <td className="px-4 py-3 text-center">{item.quantity}</td>
-                    <td className="px-4 py-3 text-right">₹{item.price.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right">₹{item.totalPrice.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right">₹{item.selling_price.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right">₹{(item.quantity * item.selling_price).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -109,17 +112,17 @@ export function BillDetailModal({
 
           {/* Mobile View */}
           <div className="md:hidden space-y-3">
-            {items.map((item, index) => (
+            {billData?.items.map((item, index) => (
               <div
                 key={index}
                 className="border border-border rounded-lg p-3 bg-card"
               >
-                <p className="mb-2">{item.productName}</p>
+                <p className="mb-2">{item.product_name}</p>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
-                    Qty: {item.quantity} × ₹{item.price.toLocaleString()}
+                    Qty: {item.quantity} × ₹{item.selling_price.toLocaleString()}
                   </span>
-                  <span className="text-primary">₹{item.totalPrice.toLocaleString()}</span>
+                  <span className="text-primary">₹{(item.quantity * item.selling_price).toLocaleString()}</span>
                 </div>
               </div>
             ))}
@@ -132,10 +135,10 @@ export function BillDetailModal({
             <span className="text-muted-foreground">Subtotal</span>
             <span>₹{subtotal.toLocaleString()}</span>
           </div>
-          
-          {discountRate > 0 && (
+
+          {discountAmount > 0 && (
             <div className="flex justify-between text-green-600">
-              <span>Discount ({discountRate}%)</span>
+              <span>Discount ({discountAmount})</span>
               <span>- ₹{discountAmount.toLocaleString()}</span>
             </div>
           )}
@@ -144,7 +147,7 @@ export function BillDetailModal({
             <div className="flex justify-between items-center">
               <span className="text-lg">Total Amount</span>
               <span className="text-2xl text-primary">
-                ₹{finalTotal.toLocaleString()}
+                ₹{grandTotal.toLocaleString()}
               </span>
             </div>
           </div>
@@ -171,7 +174,7 @@ export function BillDetailModal({
           Print Bill
         </button>
         <button
-          onClick={handleDownload}
+          onClick={() => billData && handleDownload(billData)}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors"
         >
           <Download className="w-4 h-4" />

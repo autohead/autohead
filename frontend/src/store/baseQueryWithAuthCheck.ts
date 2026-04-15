@@ -25,7 +25,7 @@ const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
     localStorage.setItem("adminToken", loginData.access);
     localStorage.setItem("adminRefreshToken", loginData.refresh);
     localStorage.setItem("is_superuser", JSON.stringify(loginData.is_superuser));
-    console.log(loginData);
+    // console.log(loginData);
     return result;
   }
 
@@ -63,7 +63,7 @@ const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
 };
 
 function logoutAndRedirect() {
-  alert("session expired");
+  alert("session expired and this alert is for testing purposes");
   localStorage.clear();
   sessionStorage.clear();
   window.location.reload(); // reloads app → App.tsx shows SignInPage
