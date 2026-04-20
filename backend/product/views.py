@@ -124,7 +124,7 @@ class ProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class DeleteAllProductsView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
         Products.objects.all().delete()
