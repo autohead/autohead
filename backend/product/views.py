@@ -127,13 +127,7 @@ class DeleteAllProductsView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        batch_size = 10
-        qs = Products.objects.all()
-        while qs.exists():
-            ids = list(qs.values_list("id", flat=True)[:batch_size])
-            if not ids:
-                break
-            Products.objects.filter(id__in=ids).delete()
+        Products.objects.all().delete()
         return custom_response(data=None, method="DELETE", data_name="Products")
 
 # View for listing products and vendors for dropdowns.
