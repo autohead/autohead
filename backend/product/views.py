@@ -122,13 +122,17 @@ class ProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         method = "DEACTIVATE" if instance.is_active else "REACTIVATE"
         return custom_response(data=None, method=method, data_name="Product")
 
-
+from rest_framework.response import Response
 class DeleteAllProductsView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
+    # def delete(self, request, *args, **kwargs):
+    #     Products.objects.all().delete()
+    #     return custom_response(data=None, method="DELETE", data_name="Products")
+    
     def delete(self, request, *args, **kwargs):
         Products.objects.all().delete()
-        return custom_response(data=None, method="DELETE", data_name="Products")
+        return Response({"message": "Deleted"})
 
 # View for listing products and vendors for dropdowns.
 class DropdownDataList(generics.ListAPIView):
