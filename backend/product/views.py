@@ -37,7 +37,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
         )
         .order_by("-created_at")
     )
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     pagination_class = ProductPagination
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
@@ -124,7 +124,7 @@ class ProductUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class DeleteAllProductsView(generics.GenericAPIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
         Products.objects.all().delete()
