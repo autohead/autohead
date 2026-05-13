@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     "bill",
     "productReturn",
     "dashboard",
+    "transaction",
     # cloudinary
     "cloudinary",
     "cloudinary_storage",

@@ -6,6 +6,7 @@ import VendorsPage from './pages/VendorsPage';
 import ProductsPage from './pages/ProductsPage';
 import BillingPage from './pages/BillingPage';
 import BillRecords from './pages/BillRecords';
+import TransactionsPage from './pages/TranasactionsPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
@@ -54,6 +55,8 @@ const handleLogoutClick = () => {
         return <BillingPage />;
       case 'billRecords':
         return <BillRecords />;
+      case 'transactions':
+        return <TransactionsPage />;
       default:
         return <DashboardPage />;
     }
