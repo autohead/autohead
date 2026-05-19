@@ -11,6 +11,7 @@ class Transaction(models.Model):
     ]
     
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField(auto_now_add=True)
     transaction_type = models.CharField(max_length=10, choices=Transaction_TYPE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

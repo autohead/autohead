@@ -7,6 +7,7 @@ import {
     X,
     Receipt,
     Banknote ,
+    ArrowDownUp,
     // LayoutGrid,
 } from 'lucide-react';
 
@@ -30,6 +31,7 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onToggle, onQuickActi
         { id: 'billing', label: 'Billing', icon: FileText },
         {id: 'billRecords', label: 'Bill Records', icon: Receipt},
         {id: 'transactions', label: 'Transactions', icon: Banknote},
+        {id: 'analytics', label: 'Analytics', icon: ArrowDownUp},
     ];
 
 

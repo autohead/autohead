@@ -6,6 +6,7 @@ import VendorsPage from './pages/VendorsPage';
 import ProductsPage from './pages/ProductsPage';
 import BillingPage from './pages/BillingPage';
 import BillRecords from './pages/BillRecords';
+import Analytics from './pages/Analytics';
 import TransactionsPage from './pages/TranasactionsPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -57,6 +58,8 @@ const handleLogoutClick = () => {
         return <BillRecords />;
       case 'transactions':
         return <TransactionsPage />;
+      case 'analytics':
+        return <Analytics />;
       default:
         return <DashboardPage />;
     }

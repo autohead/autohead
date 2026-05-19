@@ -56,6 +56,7 @@ class TransactionFormSerializers(serializers.ModelSerializer):
         fields = [
             "id",
             "transaction_type",
+            "date",
             "total_amount",
             "created_at",
             "items",
@@ -125,3 +126,38 @@ class TransactionFormSerializers(serializers.ModelSerializer):
         transaction_obj.total_amount = total_amount
         transaction_obj.save()
         return transaction_obj
+
+
+
+class TransactionItemReadSerializer(serializers.ModelSerializer):
+
+    product_name = serializers.CharField(
+        source="product.product_name",
+        read_only=True
+    )
+
+    class Meta:
+        model = TransactionItem
+        fields = [
+            "id",
+            "item_type",
+            "product",
+            "product_name",
+            "item_name",
+            "quantity",
+            "price",
+        ]
+
+class TransactionReadSerializer(serializers.ModelSerializer):
+    items = TransactionItemReadSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Transaction
+        fields = [
+            "id",
+            "transaction_type",
+            "total_amount",
+            "created_at",
+            "items",
+        ]
+        read_only_fields = ["id", "created_at", "total_amount"]
